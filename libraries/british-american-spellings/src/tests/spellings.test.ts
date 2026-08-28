@@ -93,7 +93,7 @@ describe(findBritishSpellings.name, () => {
     );
     const american: string[] = matches.map((match: ISpellingMatch): string => match.american);
 
-    expect(american).toEqual(['initialize', 'color', 'neighbor', 'analyze']);
+    expect(american).toEqual(['Initialize', 'color', 'neighbor', 'analyze']);
   });
 
   it('returns nothing for wholly American text', () => {

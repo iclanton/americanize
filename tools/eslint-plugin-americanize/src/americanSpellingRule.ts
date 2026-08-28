@@ -1,7 +1,7 @@
 /*! Copyright (c) Ian Clanton-Thuon. All rights reserved. */
 
 import type { Rule } from 'eslint';
-import type { Comment, Identifier, Literal, PrivateIdentifier, TemplateElement } from 'estree';
+import type { Identifier, Literal, Position, PrivateIdentifier, TemplateElement } from 'estree';
 
 import { findBritishSpellings } from '@americanize/british-american-spellings';
 import type { ISpellingMatch } from '@americanize/british-american-spellings';
@@ -24,11 +24,6 @@ const DEFAULT_OPTIONS: IAmericanSpellingOptions = {
   strings: true,
   allow: []
 };
-
-// Identifier positions the rule treats as "ours to name". Usages and imported names are
-// deliberately excluded: renaming a usage without its declaration would break the code, and
-// a British spelling reaching us from a dependency is not something this codebase can fix.
-type IdentifierParentType = Rule.Node['type'];
 
 function resolveOptions(raw: unknown): IAmericanSpellingOptions {
   if (typeof raw !== 'object' || raw === null) {
@@ -107,7 +102,7 @@ export const americanSpellingRule: Rule.RuleModule = {
       for (const match of relevantMatches(text)) {
         const matchStart: number = start + match.index;
         const matchEnd: number = matchStart + match.word.length;
-        const loc: Rule.ReportDescriptor['loc'] = {
+        const loc: { start: Position; end: Position } = {
           start: sourceCode.getLocFromIndex(matchStart),
           end: sourceCode.getLocFromIndex(matchEnd)
         };
@@ -155,7 +150,7 @@ export const americanSpellingRule: Rule.RuleModule = {
     if (options.comments) {
       listener.Program = (): void => {
         for (const comment of sourceCode.getAllComments()) {
-          if (isDocOrLineComment(comment) && comment.range !== undefined) {
+          if (comment.range !== undefined) {
             reportSpan(comment.range[0], comment.range[1], true);
           }
         }
@@ -194,10 +189,6 @@ export const americanSpellingRule: Rule.RuleModule = {
   }
 };
 
-function isDocOrLineComment(comment: Comment): boolean {
-  return comment.type === 'Line' || comment.type === 'Block';
-}
-
 // A binding position is one where this codebase chooses the name: a declaration, a
 // parameter, or a non-computed member we define. Property *reads* and imported names are
 // excluded so the rule never fires on an API it cannot rename.
@@ -207,25 +198,31 @@ function isBindingIdentifier(node: Rule.Node): boolean {
     return false;
   }
 
-  const parentType: IdentifierParentType = parent.type;
-  switch (parentType) {
-    case 'VariableDeclarator':
-      return parent.type === 'VariableDeclarator' && parent.id === node;
-    case 'FunctionDeclaration':
-    case 'FunctionExpression':
-    case 'ArrowFunctionExpression':
-      return isFunctionNameOrParam(parent, node);
-    case 'ClassDeclaration':
-    case 'ClassExpression':
-      return 'id' in parent && parent.id === node;
-    case 'Property':
-      return parent.type === 'Property' && parent.key === node && !parent.computed;
-    case 'PropertyDefinition':
-    case 'MethodDefinition':
-      return 'key' in parent && parent.key === node && !('computed' in parent && parent.computed);
-    default:
-      return false;
+  if (parent.type === 'VariableDeclarator') {
+    return parent.id === node;
   }
+
+  if (
+    parent.type === 'FunctionDeclaration' ||
+    parent.type === 'FunctionExpression' ||
+    parent.type === 'ArrowFunctionExpression'
+  ) {
+    return isFunctionNameOrParam(parent, node);
+  }
+
+  if (parent.type === 'ClassDeclaration' || parent.type === 'ClassExpression') {
+    return parent.id === node;
+  }
+
+  if (parent.type === 'Property') {
+    return parent.key === node && !parent.computed;
+  }
+
+  if (parent.type === 'PropertyDefinition' || parent.type === 'MethodDefinition') {
+    return parent.key === node && !parent.computed;
+  }
+
+  return false;
 }
 
 function isFunctionNameOrParam(parent: Rule.Node, node: Rule.Node): boolean {
