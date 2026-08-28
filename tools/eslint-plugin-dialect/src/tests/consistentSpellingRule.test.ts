@@ -34,7 +34,15 @@ ruleTester.run('consistent-spelling', consistentSpellingRule, {
     // Ambiguous American spellings (program, disk, ...) are left alone under British by
     // default, since they are accepted in British English too.
     { code: '// the program writes to disk', options: [{ dialect: 'british' }] },
-    { code: 'const dialog = 1;', options: [{ dialect: 'british' }] }
+    { code: 'const dialog = 1;', options: [{ dialect: 'british' }] },
+    // Import/require specifiers: the package name is never checked, even when it contains a
+    // non-preferred spelling (e.g. `axe` -> `ax`, or a package literally named `colour-*`).
+    "import { x } from 'axe-core';",
+    "import { x } from 'colour-picker';",
+    "const m = require('behaviour-lib');",
+    "export { y } from '@scope/colour-utils';",
+    // ...and the in-package file path is left alone when importPaths is off.
+    { code: "import { x } from './colourPicker';", options: [{ importPaths: false }] }
   ],
   invalid: [
     // Identifiers are report-only: flagged, but never rewritten.
@@ -85,15 +93,14 @@ ruleTester.run('consistent-spelling', consistentSpellingRule, {
         }
       ]
     },
-    // Strings are not auto-fixed, but offer a suggestion.
+    // Strings are auto-fixed.
     {
       code: "const s = 'the colour is red';",
-      output: null,
+      output: "const s = 'the color is red';",
       errors: [
         {
           messageId: 'usePreferred',
-          data: { from: 'colour', to: 'color', preferred: 'American', offending: 'British' },
-          suggestions: [{ messageId: 'replaceWith', output: "const s = 'the color is red';" }]
+          data: { from: 'colour', to: 'color', preferred: 'American', offending: 'British' }
         }
       ]
     },
@@ -125,16 +132,15 @@ ruleTester.run('consistent-spelling', consistentSpellingRule, {
         }
       ]
     },
-    // ...and a string offers a British suggestion.
+    // ...and a template string is auto-fixed to the British spelling.
     {
       code: 'const s = `please normalize`;',
       options: [{ dialect: 'british' }],
-      output: null,
+      output: 'const s = `please normalise`;',
       errors: [
         {
           messageId: 'usePreferred',
-          data: { from: 'normalize', to: 'normalise', preferred: 'British', offending: 'American' },
-          suggestions: [{ messageId: 'replaceWith', output: 'const s = `please normalise`;' }]
+          data: { from: 'normalize', to: 'normalise', preferred: 'British', offending: 'American' }
         }
       ]
     },
@@ -151,6 +157,51 @@ ruleTester.run('consistent-spelling', consistentSpellingRule, {
         {
           messageId: 'usePreferred',
           data: { from: 'disk', to: 'disc', preferred: 'British', offending: 'American' }
+        }
+      ]
+    },
+    // The in-package file path of an import IS checked — report-only, since the file on disk
+    // would also need renaming.
+    {
+      code: "import { x } from './colourPicker';",
+      output: null,
+      errors: [
+        {
+          messageId: 'usePreferred',
+          data: { from: 'colour', to: 'color', preferred: 'American', offending: 'British' }
+        }
+      ]
+    },
+    // A subpath after the package name is checked; the package name (`axe`) is not.
+    {
+      code: "import { x } from 'axe-core/behaviourUtils';",
+      output: null,
+      errors: [
+        {
+          messageId: 'usePreferred',
+          data: { from: 'behaviour', to: 'behavior', preferred: 'American', offending: 'British' }
+        }
+      ]
+    },
+    // Scoped-package subpaths too (the `@scope/pkg` part is skipped).
+    {
+      code: "import { x } from '@scope/pkg/colourUtils';",
+      output: null,
+      errors: [
+        {
+          messageId: 'usePreferred',
+          data: { from: 'colour', to: 'color', preferred: 'American', offending: 'British' }
+        }
+      ]
+    },
+    // require() file paths are checked the same way.
+    {
+      code: "const m = require('./colourUtils');",
+      output: null,
+      errors: [
+        {
+          messageId: 'usePreferred',
+          data: { from: 'colour', to: 'color', preferred: 'American', offending: 'British' }
         }
       ]
     }
