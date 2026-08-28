@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "@americanize/british-american-spellings",
+      "comment": "Add repository, homepage and bugs links, an MIT license file, and license/author metadata.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@americanize/british-american-spellings",
+  "email": "iclanton@users.noreply.github.com"
+}
