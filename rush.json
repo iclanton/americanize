@@ -48,7 +48,8 @@
       "packageName": "@americanize/eslint-config",
       "projectFolder": "tools/eslint-config",
       "reviewCategory": "tools",
-      "shouldPublish": false
+      "shouldPublish": false,
+      "decoupledLocalDependencies": ["eslint-plugin-dialect"]
     },
     {
       "packageName": "@americanize/local-build-rig",

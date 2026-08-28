@@ -6,6 +6,11 @@ const headersEslintPlugin = require('eslint-plugin-headers');
 
 const nodeImportResolverPath = require.resolve('eslint-import-resolver-node');
 
+// Dogfood our own spelling rule. `eslint-plugin-dialect` is consumed from the registry (see
+// its `decoupledLocalDependencies` entry in rush.json) rather than as a workspace link, which
+// keeps it out of this repo's build graph and always available as a prebuilt package.
+const dialectEslintPlugin = require('eslint-plugin-dialect');
+
 // Async functions/methods must end in `Async`. The @typescript-eslint `method`
 // selector only matches class/object methods, so free functions (`function`)
 // and async arrow functions assigned to a variable (`variable`) need their own
@@ -31,12 +36,16 @@ module.exports = {
       plugins: {
         '@rushstack': rushstackEslintPlugin,
         import: importEslintPlugin,
-        headers: headersEslintPlugin
+        headers: headersEslintPlugin,
+        dialect: dialectEslintPlugin
       },
       settings: {
         'import/resolver': nodeImportResolverPath
       },
       rules: {
+        // Enforce American spellings across the repo via our own plugin.
+        'dialect/consistent-spelling': 'warn',
+
         // Rationale: Backslashes are platform-specific and will cause breaks on non-Windows
         // platforms.
         '@rushstack/no-backslash-imports': 'error',
@@ -194,7 +203,9 @@ module.exports = {
         '**/test/**/*.tsx'
       ],
       rules: {
-        'import/order': 'off'
+        'import/order': 'off',
+        // Test fixtures deliberately contain British spellings as inputs.
+        'dialect/consistent-spelling': 'off'
       }
     }
   ]
