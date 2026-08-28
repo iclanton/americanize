@@ -1,0 +1,10 @@
+# Rush uses this file (instead of .npmrc) to authenticate when running "rush publish".
+#
+# Do NOT hard-code a token here. Provide it via an environment variable, which Rush expands
+# below. Lines referencing an undefined variable are omitted from the generated .npmrc, so an
+# unset token simply results in an unauthenticated (failing) publish rather than a broken file.
+#
+#   export NPM_AUTH_TOKEN=<your npm automation token>
+#
+registry=https://registry.npmjs.org/
+//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}
