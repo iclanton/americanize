@@ -39,7 +39,7 @@
    * Rush projects, ordered so that build tooling precedes the code that consumes it.
    *
    * - `tools/`     dev-time only: the shared ESLint config, the Heft rig, and the
-   *                Americanize ESLint plugin.
+   *                dialect-spelling ESLint plugin.
    * - `libraries/` the reusable data: the British -> American spelling table and its lookup
    *                helpers, consumed by the ESLint plugin.
    */
@@ -63,8 +63,8 @@
       "shouldPublish": true
     },
     {
-      "packageName": "eslint-plugin-americanize",
-      "projectFolder": "tools/eslint-plugin-americanize",
+      "packageName": "eslint-plugin-dialect",
+      "projectFolder": "tools/eslint-plugin-dialect",
       "reviewCategory": "tools",
       "shouldPublish": true
     }

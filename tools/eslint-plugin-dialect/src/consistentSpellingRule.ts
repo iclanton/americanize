@@ -6,8 +6,8 @@ import type { Identifier, Literal, Position, PrivateIdentifier, TemplateElement 
 import { findNonPreferredSpellings } from '@americanize/british-american-spellings';
 import type { ISpellingMatch, SpellingDialect } from '@americanize/british-american-spellings';
 
-/** Options accepted by the `american-spelling` rule. */
-export interface IAmericanSpellingOptions {
+/** Options accepted by the `consistent-spelling` rule. */
+export interface IConsistentSpellingOptions {
   /** Which English to enforce: `'american'` (default) or `'british'`. */
   readonly dialect: SpellingDialect;
   /** Check identifiers (variable, function, class and member names). Defaults to `true`. */
@@ -20,7 +20,7 @@ export interface IAmericanSpellingOptions {
   readonly allow: readonly string[];
 }
 
-const DEFAULT_OPTIONS: IAmericanSpellingOptions = {
+const DEFAULT_OPTIONS: IConsistentSpellingOptions = {
   dialect: 'american',
   identifiers: true,
   comments: true,
@@ -34,12 +34,12 @@ const DIALECT_LABEL: Record<SpellingDialect, string> = {
   british: 'British'
 };
 
-function resolveOptions(raw: unknown): IAmericanSpellingOptions {
+function resolveOptions(raw: unknown): IConsistentSpellingOptions {
   if (typeof raw !== 'object' || raw === null) {
     return DEFAULT_OPTIONS;
   }
 
-  const options: Partial<IAmericanSpellingOptions> = raw as Partial<IAmericanSpellingOptions>;
+  const options: Partial<IConsistentSpellingOptions> = raw as Partial<IConsistentSpellingOptions>;
   const allow: readonly string[] = (options.allow ?? DEFAULT_OPTIONS.allow).map((word: string): string =>
     word.toLowerCase()
   );
@@ -52,7 +52,7 @@ function resolveOptions(raw: unknown): IAmericanSpellingOptions {
 }
 
 /**
- * The `american-spelling` rule: flags spellings of the wrong dialect in identifiers,
+ * The `consistent-spelling` rule: flags spellings of the wrong dialect in identifiers,
  * comments and string literals and steers them to the configured dialect (American by
  * default, or British via the `dialect` option).
  *
@@ -60,7 +60,7 @@ function resolveOptions(raw: unknown): IAmericanSpellingOptions {
  * only, because a rename that the rule cannot follow to every reference would break the
  * build.
  */
-export const americanSpellingRule: Rule.RuleModule = {
+export const consistentSpellingRule: Rule.RuleModule = {
   meta: {
     type: 'suggestion',
     docs: {

@@ -9,7 +9,7 @@ It ships two things:
 - **`@americanize/british-american-spellings`** — a reviewable table of British → American
   word spellings (and its inverse), plus small case-preserving lookup helpers that work in
   either direction.
-- **`eslint-plugin-americanize`** — an ESLint rule that flags spellings of the wrong dialect
+- **`eslint-plugin-dialect`** — an ESLint rule that flags spellings of the wrong dialect
   in identifiers, comments and strings and steers them to the configured dialect. It is the
   American counterpart to
   [`eslint-plugin-communist-spelling`](https://github.com/dprgarner/eslint-plugin-communist-spelling).
@@ -19,7 +19,7 @@ It ships two things:
 | Project                                    | Role                                                                     |
 | ------------------------------------------ | ------------------------------------------------------------------------ |
 | `libraries/british-american-spellings`     | The spelling table (`BRITISH_TO_AMERICAN`) and its lookup helpers.        |
-| `tools/eslint-plugin-americanize`          | The `american-spelling` ESLint rule. Depends on the spellings library.   |
+| `tools/eslint-plugin-dialect`          | The `consistent-spelling` ESLint rule. Depends on the spellings library.   |
 | `tools/eslint-config`                      | The shared ESLint flat config used to lint this repo (`_common`, `node`).|
 | `tools/local-build-rig`                    | The Heft `node` build/test rig every project extends.                    |
 
@@ -70,17 +70,17 @@ and strings alike.
 
 ## The ESLint rule
 
-Register the plugin in a flat config and enable `americanize/american-spelling`:
+Register the plugin in a flat config and enable `dialect/consistent-spelling`:
 
 ```js
 // eslint.config.js
-const americanize = require('eslint-plugin-americanize');
+const dialect = require('eslint-plugin-dialect');
 
 module.exports = [
   {
-    plugins: { americanize },
+    plugins: { dialect },
     rules: {
-      'americanize/american-spelling': [
+      'dialect/consistent-spelling': [
         'error',
         {
           dialect: 'american', // or 'british' to enforce British spellings instead
@@ -98,10 +98,10 @@ module.exports = [
 or spread a bundled config — `recommended` (American) or `british`:
 
 ```js
-const americanize = require('eslint-plugin-americanize');
+const dialect = require('eslint-plugin-dialect');
 module.exports = [
-  { plugins: { americanize }, ...americanize.configs.recommended } // American
-  // { plugins: { americanize }, ...americanize.configs.british }  // British
+  { plugins: { dialect }, ...dialect.configs.recommended } // American
+  // { plugins: { dialect }, ...dialect.configs.british }  // British
 ];
 ```
 

@@ -2,7 +2,7 @@
 
 import { RuleTester } from 'eslint';
 
-import { americanSpellingRule } from '../americanSpellingRule';
+import { consistentSpellingRule } from '../consistentSpellingRule';
 
 const ruleTester: RuleTester = new RuleTester({
   languageOptions: {
@@ -13,7 +13,7 @@ const ruleTester: RuleTester = new RuleTester({
 
 // `RuleTester.run` registers its own `describe`/`it` blocks with the test framework, so it
 // is called at module scope rather than nested inside a `describe`/`it` of our own.
-ruleTester.run('american-spelling', americanSpellingRule, {
+ruleTester.run('consistent-spelling', consistentSpellingRule, {
   valid: [
     // Already American (the default dialect).
     'const color = 1;',
