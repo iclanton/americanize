@@ -89,6 +89,7 @@ module.exports = [
           identifiers: true, //     variable, function, class and member names
           comments: true, //        line and block comments
           strings: true, //         string literals and template strings
+          importPaths: true, //     file-path part of import/require specifiers (not package names)
           includeAmbiguous: false, // when british, also flag program/disk/analog/dialog
           allow: [] //              spellings to leave alone (e.g. a third-party API)
         }
@@ -110,13 +111,13 @@ module.exports = [
 
 ### What gets fixed
 
-- **Comments** are **auto-fixed** (`--fix`), preserving the original casing.
-- **Strings** offer an editor **suggestion** rather than an automatic fix, because rewriting
-  a string changes program data.
-- **Identifiers** are **reported only**. A rename the rule cannot follow to every reference
-  would break the build, so it flags the name and leaves the rename to you. Only binding
-  positions (declarations, parameters, and members you define) are checked — never a
-  property read or an imported name you cannot rename.
+- **Comments** and **strings** are **auto-fixed** (`--fix`), preserving the original casing.
+- **Identifiers** and **import file paths** are **reported only**. A rename the rule cannot
+  follow — to every reference, or to the file on disk — would break the build, so it flags
+  the name and leaves the rename to you. For identifiers, only binding positions
+  (declarations, parameters, and members you define) are checked. For imports, only the
+  in-package file path is checked — the **package name is never checked** (so `import 'axe-core'`
+  is never flagged).
 
 ### Ambiguous spellings (British direction)
 

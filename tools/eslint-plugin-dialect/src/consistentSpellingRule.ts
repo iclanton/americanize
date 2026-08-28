@@ -1,7 +1,7 @@
 /*! Copyright (c) Ian Clanton-Thuon. All rights reserved. */
 
 import type { Rule } from 'eslint';
-import type { Identifier, Literal, Position, PrivateIdentifier, TemplateElement } from 'estree';
+import type { Identifier, Position, PrivateIdentifier, TemplateElement } from 'estree';
 
 import { findNonPreferredSpellings } from '@americanize/british-american-spellings';
 import type { ISpellingMatch, SpellingDialect } from '@americanize/british-american-spellings';
@@ -17,6 +17,12 @@ export interface IConsistentSpellingOptions {
   /** Check string literals and template strings. Defaults to `true`. */
   readonly strings: boolean;
   /**
+   * Check the file-path portion of `import`/`require` specifiers — the part inside a package
+   * (`./utils/myModule`, `pkg/subpath`). The package name itself is never checked, since it
+   * is chosen by the dependency, not by this codebase. Defaults to `true`.
+   */
+  readonly importPaths: boolean;
+  /**
    * When enforcing British, also flag American spellings that are widely accepted in British
    * English anyway (`program`, `disk`, `analog`, `dialog`). No effect for American. Defaults
    * to `false`.
@@ -31,6 +37,7 @@ const DEFAULT_OPTIONS: IConsistentSpellingOptions = {
   identifiers: true,
   comments: true,
   strings: true,
+  importPaths: true,
   includeAmbiguous: false,
   allow: []
 };
@@ -63,9 +70,9 @@ function resolveOptions(raw: unknown): IConsistentSpellingOptions {
  * comments and string literals and steers them to the configured dialect (American by
  * default, or British via the `dialect` option).
  *
- * Comments are auto-fixable; strings offer an editor suggestion; identifiers are reported
- * only, because a rename that the rule cannot follow to every reference would break the
- * build.
+ * Comments and strings are auto-fixable. Identifiers and import file paths are reported only,
+ * because renaming one — without following it to every reference or to the file on disk —
+ * would break the build.
  */
 export const consistentSpellingRule: Rule.RuleModule = {
   meta: {
@@ -76,10 +83,8 @@ export const consistentSpellingRule: Rule.RuleModule = {
       recommended: true
     },
     fixable: 'code',
-    hasSuggestions: true,
     messages: {
-      usePreferred: "Prefer the {{preferred}} spelling '{{to}}' over the {{offending}} '{{from}}'.",
-      replaceWith: "Replace '{{from}}' with '{{to}}'."
+      usePreferred: "Prefer the {{preferred}} spelling '{{to}}' over the {{offending}} '{{from}}'."
     },
     schema: [
       {
@@ -89,6 +94,7 @@ export const consistentSpellingRule: Rule.RuleModule = {
           identifiers: { type: 'boolean' },
           comments: { type: 'boolean' },
           strings: { type: 'boolean' },
+          importPaths: { type: 'boolean' },
           includeAmbiguous: { type: 'boolean' },
           allow: {
             type: 'array',
@@ -105,7 +111,7 @@ export const consistentSpellingRule: Rule.RuleModule = {
       sourceCode,
       options: [unresolvedOptions]
     } = context;
-    const { dialect, allow, comments, strings, identifiers, includeAmbiguous } =
+    const { dialect, allow, comments, strings, identifiers, importPaths, includeAmbiguous } =
       resolveOptions(unresolvedOptions);
     const allowed: ReadonlySet<string> = new Set(allow);
 
@@ -118,11 +124,13 @@ export const consistentSpellingRule: Rule.RuleModule = {
       );
     }
 
-    // Report every British spelling inside the source span [start, end). Reading the span
-    // straight from the source text keeps match offsets aligned with the file regardless of
-    // whether the span is a comment, a quoted string or a template chunk. When `fixable` is
-    // true the fix is applied automatically; otherwise it is offered as a suggestion.
-    function reportSpan(start: number, end: number, fixable: boolean): void {
+    // Report every non-preferred spelling inside the source span [start, end). Reading the
+    // span straight from the source text keeps match offsets aligned with the file, whether
+    // the span is a comment, a quoted string, an identifier or part of an import path. In
+    // `'fix'` mode the correction is applied by `--fix`; in `'report'` mode it is only
+    // flagged, for cases a text edit cannot safely resolve (an identifier used elsewhere, or
+    // an import path whose file on disk would also need renaming).
+    function reportSpan(start: number, end: number, mode: 'fix' | 'report'): void {
       const text: string = sourceCode.getText().slice(start, end);
 
       for (const { index, word, to } of relevantMatches(text)) {
@@ -138,40 +146,17 @@ export const consistentSpellingRule: Rule.RuleModule = {
           preferred: preferredLabel,
           offending: offendingLabel
         };
-        const applyFix: (fixer: Rule.RuleFixer) => Rule.Fix = (fixer: Rule.RuleFixer): Rule.Fix =>
-          fixer.replaceTextRange([matchStart, matchEnd], to);
 
-        if (fixable) {
-          context.report({ loc, messageId: 'usePreferred', data, fix: applyFix });
-        } else {
+        if (mode === 'fix') {
           context.report({
             loc,
             messageId: 'usePreferred',
             data,
-            suggest: [{ messageId: 'replaceWith', data, fix: applyFix }]
+            fix: (fixer: Rule.RuleFixer): Rule.Fix => fixer.replaceTextRange([matchStart, matchEnd], to)
           });
+        } else {
+          context.report({ loc, messageId: 'usePreferred', data });
         }
-      }
-    }
-
-    // Identifiers are report-only. The declaration and each reference are separate AST
-    // nodes, so a text-range fix here would rename one occurrence and silently break the
-    // rest; leave the rename to the developer.
-    function reportIdentifier(node: Identifier | PrivateIdentifier): void {
-      const { range: [start] = [0], name: text } = node;
-
-      for (const { index, word, to } of relevantMatches(text)) {
-        const matchStart: number = start + index;
-        const matchEnd: number = matchStart + word.length;
-
-        context.report({
-          loc: {
-            start: sourceCode.getLocFromIndex(matchStart),
-            end: sourceCode.getLocFromIndex(matchEnd)
-          },
-          messageId: 'usePreferred',
-          data: { from: word, to, preferred: preferredLabel, offending: offendingLabel }
-        });
       }
     }
 
@@ -181,35 +166,57 @@ export const consistentSpellingRule: Rule.RuleModule = {
       listener.Program = (): void => {
         for (const comment of sourceCode.getAllComments()) {
           if (comment.range !== undefined) {
-            reportSpan(comment.range[0], comment.range[1], true);
+            reportSpan(comment.range[0], comment.range[1], 'fix');
           }
         }
       };
     }
 
-    if (strings) {
-      listener.Literal = (literal: Literal): void => {
-        if (typeof literal.value === 'string' && literal.range !== undefined) {
-          reportSpan(literal.range[0], literal.range[1], false);
+    if (strings || importPaths) {
+      listener.Literal = (node: Rule.Node): void => {
+        if (node.type !== 'Literal' || typeof node.value !== 'string' || node.range === undefined) {
+          return;
+        }
+
+        const specifier: string | undefined = importedModuleSpecifier(node);
+        if (specifier !== undefined) {
+          // An import/require specifier. Never touch the package name; only the in-package
+          // file path, and only when asked to — report-only, since the file must be renamed too.
+          if (importPaths) {
+            const fileStart: number = inPackageFilePathStart(specifier);
+            if (fileStart < specifier.length) {
+              const contentStart: number = node.range[0] + 1; // skip the opening quote
+              reportSpan(contentStart + fileStart, contentStart + specifier.length, 'report');
+            }
+          }
+          return;
+        }
+
+        if (strings) {
+          reportSpan(node.range[0], node.range[1], 'fix');
         }
       };
+    }
 
+    if (strings) {
       listener.TemplateElement = (element: TemplateElement): void => {
         if (element.range !== undefined) {
-          reportSpan(element.range[0], element.range[1], false);
+          reportSpan(element.range[0], element.range[1], 'fix');
         }
       };
     }
 
     if (identifiers) {
       listener.Identifier = (node: Identifier & Rule.Node): void => {
-        if (isBindingIdentifier(node)) {
-          reportIdentifier(node);
+        if (isBindingIdentifier(node) && node.range !== undefined) {
+          reportSpan(node.range[0], node.range[1], 'report');
         }
       };
 
-      listener.PrivateIdentifier = (node: PrivateIdentifier): void => {
-        reportIdentifier(node);
+      listener.PrivateIdentifier = (node: PrivateIdentifier & Rule.Node): void => {
+        if (node.range !== undefined) {
+          reportSpan(node.range[0], node.range[1], 'report');
+        }
       };
     }
 
@@ -264,4 +271,48 @@ function isFunctionNameOrParam(parent: Rule.Node, node: Rule.Node): boolean {
   }
 
   return 'params' in parent && parent.params.some((param): boolean => param === node);
+}
+
+// If `node` is the string specifier of an `import`/`export ... from`/dynamic `import()` or a
+// `require(...)` call, returns the specifier text; otherwise returns undefined.
+function importedModuleSpecifier(node: Rule.Node): string | undefined {
+  const { parent } = node;
+
+  const isFromSource: boolean =
+    (parent.type === 'ImportDeclaration' ||
+      parent.type === 'ExportAllDeclaration' ||
+      parent.type === 'ExportNamedDeclaration' ||
+      parent.type === 'ImportExpression') &&
+    'source' in parent &&
+    parent.source === node;
+
+  const isRequireArgument: boolean =
+    parent.type === 'CallExpression' &&
+    parent.callee.type === 'Identifier' &&
+    parent.callee.name === 'require' &&
+    parent.arguments[0] === node;
+
+  if ((isFromSource || isRequireArgument) && node.type === 'Literal' && typeof node.value === 'string') {
+    return node.value;
+  }
+
+  return undefined;
+}
+
+// The offset within a module specifier where its in-package file path begins. A bare package
+// name (`pkg`, `@scope/pkg`) with no subpath contributes no file path (returns the string
+// length); a relative or absolute specifier is entirely a file path (returns 0); a subpath
+// import returns the offset just past `pkg/` or `@scope/pkg/`.
+function inPackageFilePathStart(specifier: string): number {
+  if (specifier.startsWith('.') || specifier.startsWith('/')) {
+    return 0;
+  }
+
+  const segments: string[] = specifier.split('/');
+  const packageSegmentCount: number = specifier.startsWith('@') ? 2 : 1;
+  if (segments.length <= packageSegmentCount) {
+    return specifier.length;
+  }
+
+  return segments.slice(0, packageSegmentCount).join('/').length + 1;
 }
