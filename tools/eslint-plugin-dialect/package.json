@@ -11,6 +11,15 @@
     "american",
     "british"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iclanton/americanize.git",
+    "directory": "tools/eslint-plugin-dialect"
+  },
+  "homepage": "https://github.com/iclanton/americanize/tree/main/tools/eslint-plugin-dialect#readme",
+  "bugs": "https://github.com/iclanton/americanize/issues",
+  "license": "MIT",
+  "author": "Ian Clanton-Thuon",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "peerDependencies": {
