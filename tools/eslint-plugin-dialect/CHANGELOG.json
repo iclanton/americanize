@@ -1,0 +1,22 @@
+{
+  "name": "eslint-plugin-dialect",
+  "entries": [
+    {
+      "version": "0.1.0",
+      "tag": "eslint-plugin-dialect_v0.1.0",
+      "date": "Fri, 28 Aug 2026 08:05:44 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Initial release."
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@americanize/british-american-spellings\" to `0.1.0`"
+          }
+        ]
+      }
+    }
+  ]
+}

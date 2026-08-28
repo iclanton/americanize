@@ -1,0 +1,17 @@
+{
+  "name": "@americanize/british-american-spellings",
+  "entries": [
+    {
+      "version": "0.1.0",
+      "tag": "@americanize/british-american-spellings_v0.1.0",
+      "date": "Fri, 28 Aug 2026 08:05:44 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Initial release."
+          }
+        ]
+      }
+    }
+  ]
+}
