@@ -104,14 +104,20 @@ describe(findBritishSpellings.name, () => {
 });
 
 describe('BRITISH_TO_AMERICAN table', () => {
+  it('is populated', () => {
+    // Guards against the loops below passing vacuously if the table is ever emptied or its
+    // type changes out from under this suite.
+    expect(BRITISH_TO_AMERICAN.size).toBeGreaterThan(1000);
+  });
+
   it('never maps a word to itself', () => {
-    for (const [british, american] of Object.entries(BRITISH_TO_AMERICAN)) {
+    for (const [british, american] of BRITISH_TO_AMERICAN) {
       expect(british).not.toBe(american);
     }
   });
 
   it('is entirely lower-case on both sides', () => {
-    for (const [british, american] of Object.entries(BRITISH_TO_AMERICAN)) {
+    for (const [british, american] of BRITISH_TO_AMERICAN) {
       expect(british).toBe(british.toLowerCase());
       expect(american).toBe(american.toLowerCase());
     }

@@ -192,12 +192,9 @@ export const americanSpellingRule: Rule.RuleModule = {
 // parameter, or a non-computed member we define. Property *reads* and imported names are
 // excluded so the rule never fires on an API it cannot rename.
 function isBindingIdentifier(node: Rule.Node): boolean {
-  const parent: Rule.Node | undefined = node.parent;
-  if (parent === undefined) {
-    return false;
-  }
-
+  const { parent } = node;
   const { type } = parent;
+
   // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
   switch (type) {
     case 'VariableDeclarator': {
