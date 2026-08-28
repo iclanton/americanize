@@ -82,9 +82,12 @@ export const americanSpellingRule: Rule.RuleModule = {
   },
 
   create(context: Rule.RuleContext): Rule.RuleListener {
-    const options: IAmericanSpellingOptions = resolveOptions(context.options[0]);
-    const allowed: ReadonlySet<string> = new Set(options.allow);
-    const { sourceCode } = context;
+    const {
+      sourceCode,
+      options: [unresolvedOptions]
+    } = context;
+    const { allow, comments, strings, identifiers } = resolveOptions(unresolvedOptions);
+    const allowed: ReadonlySet<string> = new Set(allow);
 
     function relevantMatches(text: string): ISpellingMatch[] {
       return findBritishSpellings(text).filter(
@@ -99,8 +102,7 @@ export const americanSpellingRule: Rule.RuleModule = {
     function reportSpan(start: number, end: number, fixable: boolean): void {
       const text: string = sourceCode.getText().slice(start, end);
 
-      for (const match of relevantMatches(text)) {
-        const { index, word, american } = match;
+      for (const { index, word, american } of relevantMatches(text)) {
         const matchStart: number = start + index;
         const matchEnd: number = matchStart + word.length;
         const loc: { start: Position; end: Position } = {
@@ -128,11 +130,9 @@ export const americanSpellingRule: Rule.RuleModule = {
     // nodes, so a text-range fix here would rename one occurrence and silently break the
     // rest; leave the rename to the developer.
     function reportIdentifier(node: Identifier | PrivateIdentifier): void {
-      const start: number = node.range?.[0] ?? 0;
-      const text: string = node.name;
+      const { range: [start] = [0], name: text } = node;
 
-      for (const match of relevantMatches(text)) {
-        const { index, word, american } = match;
+      for (const { index, word, american } of relevantMatches(text)) {
         const matchStart: number = start + index;
         const matchEnd: number = matchStart + word.length;
 
@@ -149,7 +149,7 @@ export const americanSpellingRule: Rule.RuleModule = {
 
     const listener: Rule.RuleListener = {};
 
-    if (options.comments) {
+    if (comments) {
       listener.Program = (): void => {
         for (const comment of sourceCode.getAllComments()) {
           if (comment.range !== undefined) {
@@ -159,31 +159,29 @@ export const americanSpellingRule: Rule.RuleModule = {
       };
     }
 
-    if (options.strings) {
-      listener.Literal = (node: Rule.Node): void => {
-        const literal: Literal = node as Literal;
+    if (strings) {
+      listener.Literal = (literal: Literal): void => {
         if (typeof literal.value === 'string' && literal.range !== undefined) {
           reportSpan(literal.range[0], literal.range[1], false);
         }
       };
 
-      listener.TemplateElement = (node: Rule.Node): void => {
-        const element: TemplateElement = node as unknown as TemplateElement;
+      listener.TemplateElement = (element: TemplateElement): void => {
         if (element.range !== undefined) {
           reportSpan(element.range[0], element.range[1], false);
         }
       };
     }
 
-    if (options.identifiers) {
-      listener.Identifier = (node: Rule.Node): void => {
+    if (identifiers) {
+      listener.Identifier = (node: Identifier & Rule.Node): void => {
         if (isBindingIdentifier(node)) {
-          reportIdentifier(node as Identifier);
+          reportIdentifier(node);
         }
       };
 
-      listener.PrivateIdentifier = (node: Rule.Node): void => {
-        reportIdentifier(node as unknown as PrivateIdentifier);
+      listener.PrivateIdentifier = (node: PrivateIdentifier): void => {
+        reportIdentifier(node);
       };
     }
 
@@ -195,36 +193,44 @@ export const americanSpellingRule: Rule.RuleModule = {
 // parameter, or a non-computed member we define. Property *reads* and imported names are
 // excluded so the rule never fires on an API it cannot rename.
 function isBindingIdentifier(node: Rule.Node): boolean {
-  const parent: Rule.Node | undefined = node.parent as Rule.Node | undefined;
+  const parent: Rule.Node | undefined = node.parent;
   if (parent === undefined) {
     return false;
   }
 
-  if (parent.type === 'VariableDeclarator') {
-    return parent.id === node;
-  }
+  const { type } = parent;
+  // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
+  switch (type) {
+    case 'VariableDeclarator': {
+      return parent.id === node;
+    }
 
-  if (
-    parent.type === 'FunctionDeclaration' ||
-    parent.type === 'FunctionExpression' ||
-    parent.type === 'ArrowFunctionExpression'
-  ) {
-    return isFunctionNameOrParam(parent, node);
-  }
+    case 'FunctionDeclaration':
+    case 'FunctionExpression':
+    case 'ArrowFunctionExpression': {
+      return isFunctionNameOrParam(parent, node);
+    }
 
-  if (parent.type === 'ClassDeclaration' || parent.type === 'ClassExpression') {
-    return parent.id === node;
-  }
+    case 'ClassDeclaration':
+    case 'ClassExpression': {
+      return parent.id === node;
+    }
 
-  if (parent.type === 'Property') {
-    return parent.key === node && !parent.computed;
-  }
+    case 'Property': {
+      const { key, computed } = parent;
+      return key === node && !computed;
+    }
 
-  if (parent.type === 'PropertyDefinition' || parent.type === 'MethodDefinition') {
-    return parent.key === node && !parent.computed;
-  }
+    case 'PropertyDefinition':
+    case 'MethodDefinition': {
+      const { key, computed } = parent;
+      return key === node && !computed;
+    }
 
-  return false;
+    default: {
+      return false;
+    }
+  }
 }
 
 function isFunctionNameOrParam(parent: Rule.Node, node: Rule.Node): boolean {

@@ -84,8 +84,7 @@ const WORD_PATTERN: RegExp = /[A-Za-z]+/g;
 export function findBritishSpellings(text: string): ISpellingMatch[] {
   const matches: ISpellingMatch[] = [];
 
-  for (const rawWord of splitWords(text)) {
-    const { value, index } = rawWord;
+  for (const { value, index } of splitWords(text)) {
     const american: string | undefined = getAmericanSpelling(value);
     if (american !== undefined) {
       matches.push({

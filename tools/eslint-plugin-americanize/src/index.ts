@@ -3,13 +3,14 @@
 import type { ESLint, Linter, Rule } from 'eslint';
 
 import { americanSpellingRule } from './americanSpellingRule';
+import { name, version } from '../package.json';
 
 const rules: Record<string, Rule.RuleModule> = {
   'american-spelling': americanSpellingRule
 };
 
 const recommended: Linter.Config = {
-  rules: { 'americanize/american-spelling': 'error' }
+  rules: { 'americanize/american-spelling': 'warn' }
 };
 
 /**
@@ -20,7 +21,7 @@ const recommended: Linter.Config = {
  * ```js
  * const americanize = require('eslint-plugin-americanize');
  * module.exports = [
- *   { plugins: { americanize }, rules: { 'americanize/american-spelling': 'error' } }
+ *   { plugins: { americanize }, rules: { 'americanize/american-spelling': 'warn' } }
  * ];
  * ```
  *
@@ -28,8 +29,8 @@ const recommended: Linter.Config = {
  */
 const plugin: ESLint.Plugin = {
   meta: {
-    name: 'eslint-plugin-americanize',
-    version: '1.0.0'
+    name,
+    version
   },
   rules,
   configs: { recommended }
