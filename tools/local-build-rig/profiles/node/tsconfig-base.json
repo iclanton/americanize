@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json.schemastore.org/tsconfig",
+
+  "extends": "../../node_modules/@rushstack/heft-node-rig/profiles/default/tsconfig-base.json",
+
+  "compilerOptions": {
+    "outDir": "${configDir}/lib",
+    "rootDir": "${configDir}/src",
+
+    "resolveJsonModule": true,
+    "importHelpers": true,
+    "isolatedModules": true,
+
+    "target": "es2022",
+    "lib": ["es2022"],
+    "types": ["node", "jest"],
+    "typeRoots": ["${configDir}/node_modules/@types", "../../node_modules/@types"],
+
+    // Strictness beyond the Rush Stack defaults. Every one of these turns a class of
+    // runtime bug into a compile error; see AGENTS.md house convention #6.
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "forceConsistentCasingInFileNames": true,
+    "exactOptionalPropertyTypes": true
+  },
+
+  "include": ["${configDir}/src/**/*.ts", "${configDir}/src/**/*.tsx"]
+}

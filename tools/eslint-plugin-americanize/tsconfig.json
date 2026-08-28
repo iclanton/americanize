@@ -1,0 +1,3 @@
+{
+  "extends": "@americanize/local-build-rig/profiles/node/tsconfig-base.json"
+}

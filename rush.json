@@ -1,0 +1,72 @@
+/**
+ * This is the main configuration file for Rush.
+ * For full documentation, please see https://rushjs.io
+ */
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/rush.schema.json",
+
+  "rushVersion": "5.178.1",
+
+  "pnpmVersion": "10.34.5",
+
+  "nodeSupportedVersionRange": ">=20.0.0 <25.0.0",
+
+  "suppressNodeLtsWarning": true,
+
+  // NOTE: "ensureConsistentVersions" is configured in common/config/rush/common-versions.json;
+  // Rush rejects the setting if it appears in both files.
+
+  "projectFolderMinDepth": 2,
+  "projectFolderMaxDepth": 2,
+
+  "gitPolicy": {},
+
+  "repository": {
+    "defaultBranch": "main",
+    "defaultRemote": "origin"
+  },
+
+  "eventHooks": {
+    "preRushInstall": [],
+    "postRushInstall": [],
+    "preRushBuild": [],
+    "postRushBuild": []
+  },
+
+  "variants": [],
+
+  /**
+   * Rush projects, ordered so that build tooling precedes the code that consumes it.
+   *
+   * - `tools/`     dev-time only: the shared ESLint config, the Heft rig, and the
+   *                Americanize ESLint plugin.
+   * - `libraries/` the reusable data: the British -> American spelling table and its lookup
+   *                helpers, consumed by the ESLint plugin.
+   */
+  "projects": [
+    {
+      "packageName": "@americanize/eslint-config",
+      "projectFolder": "tools/eslint-config",
+      "reviewCategory": "tools",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@americanize/local-build-rig",
+      "projectFolder": "tools/local-build-rig",
+      "reviewCategory": "tools",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@americanize/british-american-spellings",
+      "projectFolder": "libraries/british-american-spellings",
+      "reviewCategory": "libraries",
+      "shouldPublish": true
+    },
+    {
+      "packageName": "eslint-plugin-americanize",
+      "projectFolder": "tools/eslint-plugin-americanize",
+      "reviewCategory": "tools",
+      "shouldPublish": true
+    }
+  ]
+}

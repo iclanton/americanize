@@ -1,0 +1,25 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush-project/v0/rush-project.schema.json",
+
+  "extends": "@rushstack/heft-node-rig/profiles/default/config/rush-project.json",
+
+  "operationSettings": [
+    {
+      // The base rig declares only the build phase, so without this every `_phase:test`
+      // operation logs "does not define the caching behavior" and re-runs on every build,
+      // however little changed. That was five of the thirteen operations in CI.
+      //
+      // `coverage` is where the Jest config redirects its output, deliberately outside
+      // `temp` so that the build phase - which owns `temp` - cannot clear it on a cache
+      // restore. Restoring it matters: a cached test phase that produced no coverage file
+      // would silently break the pipeline step that publishes one.
+      //
+      // Safe because these are hermetic unit tests: no network, no clock, no shared state,
+      // so identical inputs really do imply an identical result. The Playwright suite is
+      // deliberately not part of this phase - it runs through `test:e2e` against real
+      // browsers, where that assumption would not hold.
+      "operationName": "_phase:test",
+      "outputFolderNames": ["coverage"]
+    }
+  ]
+}

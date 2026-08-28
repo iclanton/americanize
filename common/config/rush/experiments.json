@@ -1,0 +1,9 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/experiments.schema.json",
+
+  "usePnpmFrozenLockfileForRushInstall": true,
+  "usePnpmPreferFrozenLockfileForRushUpdate": true,
+  "omitImportersFromPreventManualShrinkwrapChanges": true,
+  "cleanInstallAfterNpmrcChanges": true,
+  "omitAppleDoubleFilesFromBuildCache": true
+}

@@ -1,0 +1,82 @@
+/**
+ * This configuration file defines custom commands for the "rush" command-line.
+ * More documentation is available on the Rush website: https://rushjs.io
+ */
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/command-line.schema.json",
+
+  "commands": [
+    {
+      "commandKind": "phased",
+      "name": "build",
+      "phases": ["_phase:build"]
+    },
+    {
+      "commandKind": "phased",
+      "name": "test",
+      "summary": "Builds all projects and runs their tests.",
+      "phases": ["_phase:build", "_phase:test"],
+      "enableParallelism": true,
+      "incremental": true
+    },
+    {
+      "commandKind": "phased",
+      "name": "retest",
+      "summary": "Rebuilds all projects and reruns their tests.",
+      "phases": ["_phase:build", "_phase:test"],
+      "enableParallelism": true,
+      "incremental": false
+    },
+    {
+      "commandKind": "phased",
+      "name": "start",
+      "summary": "Build all projects, then watch for changes, build and test.",
+      "description": "Build all projects, then watches for changes and builds and runs tests for affected projects.",
+      "safeForSimultaneousRushProcesses": false,
+      "enableParallelism": true,
+      "incremental": true,
+      "phases": ["_phase:build"],
+      "watchOptions": {
+        "alwaysWatch": true,
+        "watchPhases": ["_phase:build", "_phase:test"]
+      }
+    },
+    {
+      "name": "prettier",
+      "commandKind": "global",
+      "summary": "Used by the pre-commit Git hook. This command invokes Prettier to reformat staged changes.",
+      "autoinstallerName": "rush-prettier",
+      "shellCommand": "pretty-quick --staged",
+      "safeForSimultaneousRushProcesses": true
+    }
+  ],
+
+  "phases": [
+    {
+      "name": "_phase:build",
+      "dependencies": {
+        "upstream": ["_phase:build"]
+      },
+      "missingScriptBehavior": "error",
+      "allowWarningsOnSuccess": false
+    },
+    {
+      "name": "_phase:test",
+      "dependencies": {
+        "self": ["_phase:build"]
+      },
+      "missingScriptBehavior": "silent",
+      "allowWarningsOnSuccess": false
+    }
+  ],
+
+  "parameters": [
+    {
+      "longName": "--fix",
+      "parameterKind": "flag",
+      "description": "Automatically fix problems encountered while linting",
+      "associatedPhases": ["_phase:build"],
+      "associatedCommands": ["build", "rebuild", "test", "retest"]
+    }
+  ]
+}

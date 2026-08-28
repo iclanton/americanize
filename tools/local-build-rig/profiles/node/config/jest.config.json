@@ -1,0 +1,15 @@
+{
+  "extends": "@rushstack/heft-node-rig/profiles/default/config/jest.config.json",
+
+  "collectCoverage": true,
+
+  // Deliberately not the inherited "<rootDir>/temp/coverage". `temp` is a declared output of
+  // the *build* phase, so coverage written inside it would belong to the wrong phase: a
+  // build-cache restore clears `temp` and would take the coverage with it, and the two
+  // phases would be declaring overlapping output folders. Its own directory keeps the
+  // ownership honest and lets `_phase:test` cache it.
+  "coverageDirectory": "<rootDir>/coverage",
+
+  // cobertura for Azure Pipelines to ingest, html for a human chasing a specific gap.
+  "coverageReporters": ["cobertura", "html"]
+}
