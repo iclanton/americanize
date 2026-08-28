@@ -1,13 +1,22 @@
 /*! Copyright (c) Ian Clanton-Thuon. All rights reserved. */
 
-import { BRITISH_TO_AMERICAN } from './britishAmericanSpellings';
+import { AMERICAN_TO_BRITISH, BRITISH_TO_AMERICAN } from './britishAmericanSpellings';
 
-/** One British spelling and the American spelling it should be replaced with. */
+/** Which English is being enforced: `'american'` steers toward American spellings, `'british'` toward British. */
+export type SpellingDialect = 'american' | 'british';
+
+/** One non-preferred spelling and the preferred spelling it should be replaced with. */
 export interface ISpellingCorrection {
-  /** The offending British (Commonwealth) spelling, lower-cased. */
-  readonly british: string;
-  /** The American spelling to use instead, matched to the casing of the input word. */
-  readonly american: string;
+  /** The offending (non-preferred) spelling, lower-cased. */
+  readonly from: string;
+  /** The preferred spelling to use instead, matched to the casing of the input word. */
+  readonly to: string;
+}
+
+// The translation table that steers *toward* a target dialect: to enforce American spellings
+// we look words up in the British->American table, and vice versa.
+function tableFor(target: SpellingDialect): ReadonlyMap<string, string> {
+  return target === 'american' ? BRITISH_TO_AMERICAN : AMERICAN_TO_BRITISH;
 }
 
 /**
@@ -29,7 +38,8 @@ export function matchCase(source: string, replacement: string): string {
   }
 
   const firstChar: string = source.charAt(0);
-  const isCapitalised: boolean = firstChar === firstChar.toUpperCase() && firstChar !== firstChar.toLowerCase();
+  const isCapitalised: boolean =
+    firstChar === firstChar.toUpperCase() && firstChar !== firstChar.toLowerCase();
   if (isCapitalised) {
     return replacement.charAt(0).toUpperCase() + replacement.slice(1);
   }
@@ -38,28 +48,48 @@ export function matchCase(source: string, replacement: string): string {
 }
 
 /**
- * Looks up a single whole word, ignoring case.
+ * Looks up a single whole word, ignoring case, for a target dialect.
  *
- * Returns the American spelling (cased to match `word`) when `word` is a known British
- * spelling, or `undefined` when it is already American or simply unknown. The lookup is
- * whole-word only: callers are responsible for splitting identifiers and prose into words
- * first (see {@link findBritishSpellings}).
+ * Returns the preferred spelling (cased to match `word`) when `word` is a known
+ * non-preferred spelling for `target`, or `undefined` when it is already in the target
+ * dialect or simply unknown. The lookup is whole-word only: callers are responsible for
+ * splitting identifiers and prose into words first (see {@link findNonPreferredSpellings}).
  */
-export function getAmericanSpelling(word: string): string | undefined {
-  const american: string | undefined = BRITISH_TO_AMERICAN.get(word.toLowerCase());
-  if (american === undefined) {
+export function getPreferredSpelling(word: string, target: SpellingDialect): string | undefined {
+  const preferred: string | undefined = tableFor(target).get(word.toLowerCase());
+  if (preferred === undefined) {
     return undefined;
   }
 
-  return matchCase(word, american);
+  return matchCase(word, preferred);
+}
+
+/** Whether `word` is a known non-preferred spelling for `target` (i.e. it has a distinct preferred form). */
+export function isNonPreferredSpelling(word: string, target: SpellingDialect): boolean {
+  return tableFor(target).has(word.toLowerCase());
+}
+
+/** Looks up the American spelling of a British word. Shorthand for {@link getPreferredSpelling} with `'american'`. */
+export function getAmericanSpelling(word: string): string | undefined {
+  return getPreferredSpelling(word, 'american');
+}
+
+/** Looks up the British spelling of an American word. Shorthand for {@link getPreferredSpelling} with `'british'`. */
+export function getBritishSpelling(word: string): string | undefined {
+  return getPreferredSpelling(word, 'british');
 }
 
 /** Whether `word` is a known British spelling with a distinct American form. */
 export function isBritishSpelling(word: string): boolean {
-  return BRITISH_TO_AMERICAN.has(word.toLowerCase());
+  return isNonPreferredSpelling(word, 'american');
 }
 
-/** One British spelling found inside a larger piece of text, with where it was found. */
+/** Whether `word` is a known American spelling with a distinct British form. */
+export function isAmericanSpelling(word: string): boolean {
+  return isNonPreferredSpelling(word, 'british');
+}
+
+/** One non-preferred spelling found inside a larger piece of text, with where it was found. */
 export interface ISpellingMatch extends ISpellingCorrection {
   /** The exact substring that matched, preserving its original casing. */
   readonly word: string;
@@ -74,29 +104,39 @@ export interface ISpellingMatch extends ISpellingCorrection {
 const WORD_PATTERN: RegExp = /[A-Za-z]+/g;
 
 /**
- * Finds every British spelling inside an arbitrary run of text.
+ * Finds every non-preferred spelling for `target` inside an arbitrary run of text.
  *
  * The text is split into maximal letter runs, so this transparently handles
  * `camelCase`, `snake_case`, `kebab-case`, `SCREAMING_CASE` and plain prose. `camelCase`
  * boundaries are also split, so `favouriteColour` yields both `favourite` and `colour`.
  * Matches are returned in the order they appear.
  */
-export function findBritishSpellings(text: string): ISpellingMatch[] {
+export function findNonPreferredSpellings(text: string, target: SpellingDialect): ISpellingMatch[] {
   const matches: ISpellingMatch[] = [];
 
   for (const { value, index } of splitWords(text)) {
-    const american: string | undefined = getAmericanSpelling(value);
-    if (american !== undefined) {
+    const to: string | undefined = getPreferredSpelling(value, target);
+    if (to !== undefined) {
       matches.push({
         word: value,
         index,
-        british: value.toLowerCase(),
-        american
+        from: value.toLowerCase(),
+        to
       });
     }
   }
 
   return matches;
+}
+
+/** Finds every British spelling in `text`. Shorthand for {@link findNonPreferredSpellings} with `'american'`. */
+export function findBritishSpellings(text: string): ISpellingMatch[] {
+  return findNonPreferredSpellings(text, 'american');
+}
+
+/** Finds every American spelling in `text`. Shorthand for {@link findNonPreferredSpellings} with `'british'`. */
+export function findAmericanSpellings(text: string): ISpellingMatch[] {
+  return findNonPreferredSpellings(text, 'british');
 }
 
 interface IWordToken {
@@ -152,4 +192,4 @@ function isLower(ch: string): boolean {
   return ch >= 'a' && ch <= 'z';
 }
 
-export { BRITISH_TO_AMERICAN } from './britishAmericanSpellings';
+export { AMERICAN_TO_BRITISH, BRITISH_TO_AMERICAN } from './britishAmericanSpellings';

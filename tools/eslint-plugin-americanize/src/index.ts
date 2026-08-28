@@ -13,6 +13,11 @@ const recommended: Linter.Config = {
   rules: { 'americanize/american-spelling': 'warn' }
 };
 
+// The same rule, configured the other way: enforce British spellings.
+const british: Linter.Config = {
+  rules: { 'americanize/american-spelling': ['warn', { dialect: 'british' }] }
+};
+
 /**
  * The `eslint-plugin-americanize` plugin object.
  *
@@ -25,7 +30,9 @@ const recommended: Linter.Config = {
  * ];
  * ```
  *
- * or spread `americanize.configs.recommended` alongside a `plugins` entry.
+ * or spread `americanize.configs.recommended` (American) or `americanize.configs.british`
+ * alongside a `plugins` entry. Pass `{ dialect: 'british' }` to the rule directly for the
+ * same effect.
  */
 const plugin: ESLint.Plugin = {
   meta: {
@@ -33,7 +40,7 @@ const plugin: ESLint.Plugin = {
     version
   },
   rules,
-  configs: { recommended }
+  configs: { recommended, british }
 };
 
 export = plugin;

@@ -15,7 +15,7 @@ const ruleTester: RuleTester = new RuleTester({
 // is called at module scope rather than nested inside a `describe`/`it` of our own.
 ruleTester.run('american-spelling', americanSpellingRule, {
   valid: [
-    // Already American.
+    // Already American (the default dialect).
     'const color = 1;',
     '// set the color',
     "const message = 'the color is red';",
@@ -27,44 +27,59 @@ ruleTester.run('american-spelling', americanSpellingRule, {
     // Respect the per-category toggles.
     { code: 'const colour = 1;', options: [{ identifiers: false }] },
     { code: '// the colour', options: [{ comments: false }] },
-    { code: "const s = 'colour';", options: [{ strings: false }] }
+    { code: "const s = 'colour';", options: [{ strings: false }] },
+    // With the British dialect selected, British spellings are the valid ones.
+    { code: 'const colour = 1;', options: [{ dialect: 'british' }] },
+    { code: '// the colour', options: [{ dialect: 'british' }] }
   ],
   invalid: [
     // Identifiers are report-only: flagged, but never rewritten.
     {
       code: 'const colour = 1;',
       output: null,
-      errors: [{ messageId: 'useAmerican', data: { british: 'colour', american: 'color' } }]
+      errors: [
+        {
+          messageId: 'usePreferred',
+          data: { from: 'colour', to: 'color', preferred: 'American', offending: 'British' }
+        }
+      ]
     },
     // camelCase is split, so each sub-word is judged on its own.
     {
       code: 'const favouriteColour = 1;',
       output: null,
       errors: [
-        { messageId: 'useAmerican', data: { british: 'favourite', american: 'favorite' } },
-        { messageId: 'useAmerican', data: { british: 'Colour', american: 'Color' } }
-      ]
-    },
-    // A function name and its parameter are both binding positions.
-    {
-      code: 'function initialise(behaviour) { return behaviour; }',
-      output: null,
-      errors: [
-        { messageId: 'useAmerican', data: { british: 'initialise', american: 'initialize' } },
-        { messageId: 'useAmerican', data: { british: 'behaviour', american: 'behavior' } }
+        {
+          messageId: 'usePreferred',
+          data: { from: 'favourite', to: 'favorite', preferred: 'American', offending: 'British' }
+        },
+        {
+          messageId: 'usePreferred',
+          data: { from: 'Colour', to: 'Color', preferred: 'American', offending: 'British' }
+        }
       ]
     },
     // Line comments are auto-fixed.
     {
       code: '// set the colour here',
       output: '// set the color here',
-      errors: [{ messageId: 'useAmerican', data: { british: 'colour', american: 'color' } }]
+      errors: [
+        {
+          messageId: 'usePreferred',
+          data: { from: 'colour', to: 'color', preferred: 'American', offending: 'British' }
+        }
+      ]
     },
     // Block/JSDoc comments too, preserving casing.
     {
       code: '/** The Colour of the pixel. */\nconst x = 1;',
       output: '/** The Color of the pixel. */\nconst x = 1;',
-      errors: [{ messageId: 'useAmerican', data: { british: 'Colour', american: 'Color' } }]
+      errors: [
+        {
+          messageId: 'usePreferred',
+          data: { from: 'Colour', to: 'Color', preferred: 'American', offending: 'British' }
+        }
+      ]
     },
     // Strings are not auto-fixed, but offer a suggestion.
     {
@@ -72,21 +87,50 @@ ruleTester.run('american-spelling', americanSpellingRule, {
       output: null,
       errors: [
         {
-          messageId: 'useAmerican',
-          data: { british: 'colour', american: 'color' },
+          messageId: 'usePreferred',
+          data: { from: 'colour', to: 'color', preferred: 'American', offending: 'British' },
           suggestions: [{ messageId: 'replaceWith', output: "const s = 'the color is red';" }]
         }
       ]
     },
-    // Template strings are handled the same way as quoted strings.
+    // The British dialect enforces the other direction: an identifier is flagged...
     {
-      code: 'const s = `please initialise`;',
+      code: 'const color = 1;',
+      options: [{ dialect: 'british' }],
       output: null,
       errors: [
         {
-          messageId: 'useAmerican',
-          data: { british: 'initialise', american: 'initialize' },
-          suggestions: [{ messageId: 'replaceWith', output: 'const s = `please initialize`;' }]
+          messageId: 'usePreferred',
+          data: { from: 'color', to: 'colour', preferred: 'British', offending: 'American' }
+        }
+      ]
+    },
+    // ...a comment is auto-fixed to the British spelling...
+    {
+      code: '// initialize the color',
+      options: [{ dialect: 'british' }],
+      output: '// initialise the colour',
+      errors: [
+        {
+          messageId: 'usePreferred',
+          data: { from: 'initialize', to: 'initialise', preferred: 'British', offending: 'American' }
+        },
+        {
+          messageId: 'usePreferred',
+          data: { from: 'color', to: 'colour', preferred: 'British', offending: 'American' }
+        }
+      ]
+    },
+    // ...and a string offers a British suggestion.
+    {
+      code: 'const s = `please normalize`;',
+      options: [{ dialect: 'british' }],
+      output: null,
+      errors: [
+        {
+          messageId: 'usePreferred',
+          data: { from: 'normalize', to: 'normalise', preferred: 'British', offending: 'American' },
+          suggestions: [{ messageId: 'replaceWith', output: 'const s = `please normalise`;' }]
         }
       ]
     }

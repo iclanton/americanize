@@ -1,15 +1,17 @@
 # americanize
 
 A [Rush](https://rushjs.io/) monorepo of TypeScript projects, built with
-[Heft](https://heft.rushstack.io/), that keeps a codebase writing American English.
+[Heft](https://heft.rushstack.io/), that keeps a codebase writing a single English dialect —
+American by default, or British.
 
 It ships two things:
 
 - **`@americanize/british-american-spellings`** — a reviewable table of British → American
-  word spellings, plus small case-preserving lookup helpers.
-- **`eslint-plugin-americanize`** — an ESLint rule that flags British (Commonwealth)
-  spellings in identifiers, comments and strings and steers them to the American spelling.
-  It is the American counterpart to
+  word spellings (and its inverse), plus small case-preserving lookup helpers that work in
+  either direction.
+- **`eslint-plugin-americanize`** — an ESLint rule that flags spellings of the wrong dialect
+  in identifiers, comments and strings and steers them to the configured dialect. It is the
+  American counterpart to
   [`eslint-plugin-communist-spelling`](https://github.com/dprgarner/eslint-plugin-communist-spelling).
 
 ## Layout
@@ -40,23 +42,29 @@ node common/scripts/install-run-rush.js test
 forms (`colour`/`colours`/`coloured`, `organise`/`organised`/`organisation`, …) are listed
 explicitly, so a lookup is a single map read and the whole table is reviewable. The `-ise`
 words that stay `-ise` in American English (`advertise`, `exercise`, `surprise`,
-`compromise`, …) are deliberately absent.
+`compromise`, …) are deliberately absent. `AMERICAN_TO_BRITISH` is the inverse, for going the
+other way.
 
 ```ts
 import {
   getAmericanSpelling,
-  findBritishSpellings
+  getBritishSpelling,
+  findBritishSpellings,
+  findAmericanSpellings,
+  findNonPreferredSpellings // the direction-agnostic core: findNonPreferredSpellings(text, 'american' | 'british')
 } from '@americanize/british-american-spellings';
 
 getAmericanSpelling('Colour'); // 'Color'  (casing preserved)
 getAmericanSpelling('color'); // undefined (already American)
+getBritishSpelling('Color'); //  'Colour'  (the other direction)
 
 findBritishSpellings('favouriteColour');
-// [{ british: 'favourite', american: 'favorite', word: 'favourite', index: 0 },
-//  { british: 'colour',    american: 'Color',    word: 'Colour',    index: 9 }]
+// [{ from: 'favourite', to: 'favorite', word: 'favourite', index: 0 },
+//  { from: 'colour',    to: 'Color',    word: 'Colour',    index: 9 }]
 ```
 
-`findBritishSpellings` splits `camelCase`, `snake_case`, `kebab-case`, `SCREAMING_CASE`,
+`findBritishSpellings` / `findAmericanSpellings` (and the direction-agnostic
+`findNonPreferredSpellings`) split `camelCase`, `snake_case`, `kebab-case`, `SCREAMING_CASE`,
 acronym boundaries and plain prose, which is what lets one rule cover identifiers, comments
 and strings alike.
 
@@ -75,10 +83,11 @@ module.exports = [
       'americanize/american-spelling': [
         'error',
         {
-          identifiers: true, // variable, function, class and member names
-          comments: true, //    line and block comments
-          strings: true, //     string literals and template strings
-          allow: [] //          British spellings to leave alone (e.g. a third-party API)
+          dialect: 'american', // or 'british' to enforce British spellings instead
+          identifiers: true, //  variable, function, class and member names
+          comments: true, //     line and block comments
+          strings: true, //      string literals and template strings
+          allow: [] //           spellings to leave alone (e.g. a third-party API)
         }
       ]
     }
@@ -86,11 +95,14 @@ module.exports = [
 ];
 ```
 
-or spread the bundled config:
+or spread a bundled config — `recommended` (American) or `british`:
 
 ```js
 const americanize = require('eslint-plugin-americanize');
-module.exports = [{ plugins: { americanize }, ...americanize.configs.recommended }];
+module.exports = [
+  { plugins: { americanize }, ...americanize.configs.recommended } // American
+  // { plugins: { americanize }, ...americanize.configs.british }  // British
+];
 ```
 
 ### What gets fixed

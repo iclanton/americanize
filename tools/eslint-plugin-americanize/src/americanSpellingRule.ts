@@ -3,26 +3,35 @@
 import type { Rule } from 'eslint';
 import type { Identifier, Literal, Position, PrivateIdentifier, TemplateElement } from 'estree';
 
-import { findBritishSpellings } from '@americanize/british-american-spellings';
-import type { ISpellingMatch } from '@americanize/british-american-spellings';
+import { findNonPreferredSpellings } from '@americanize/british-american-spellings';
+import type { ISpellingMatch, SpellingDialect } from '@americanize/british-american-spellings';
 
 /** Options accepted by the `american-spelling` rule. */
 export interface IAmericanSpellingOptions {
+  /** Which English to enforce: `'american'` (default) or `'british'`. */
+  readonly dialect: SpellingDialect;
   /** Check identifiers (variable, function, class and member names). Defaults to `true`. */
   readonly identifiers: boolean;
   /** Check `//` and block comments. Defaults to `true`. */
   readonly comments: boolean;
   /** Check string literals and template strings. Defaults to `true`. */
   readonly strings: boolean;
-  /** British spellings to leave alone, lower-cased (e.g. a third-party API you cannot rename). */
+  /** Non-preferred spellings to leave alone, lower-cased (e.g. a third-party API you cannot rename). */
   readonly allow: readonly string[];
 }
 
 const DEFAULT_OPTIONS: IAmericanSpellingOptions = {
+  dialect: 'american',
   identifiers: true,
   comments: true,
   strings: true,
   allow: []
+};
+
+// Human-readable name of each dialect, for the message the developer reads.
+const DIALECT_LABEL: Record<SpellingDialect, string> = {
+  american: 'American',
+  british: 'British'
 };
 
 function resolveOptions(raw: unknown): IAmericanSpellingOptions {
@@ -43,8 +52,9 @@ function resolveOptions(raw: unknown): IAmericanSpellingOptions {
 }
 
 /**
- * The `american-spelling` rule: flags British (Commonwealth) spellings in identifiers,
- * comments and string literals and steers them to the American spelling.
+ * The `american-spelling` rule: flags spellings of the wrong dialect in identifiers,
+ * comments and string literals and steers them to the configured dialect (American by
+ * default, or British via the `dialect` option).
  *
  * Comments are auto-fixable; strings offer an editor suggestion; identifiers are reported
  * only, because a rename that the rule cannot follow to every reference would break the
@@ -54,19 +64,21 @@ export const americanSpellingRule: Rule.RuleModule = {
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'Enforce American English spellings in identifiers, comments and strings.',
+      description:
+        'Enforce a single English dialect (American or British) in identifiers, comments and strings.',
       recommended: true
     },
     fixable: 'code',
     hasSuggestions: true,
     messages: {
-      useAmerican: "Prefer the American spelling '{{american}}' over the British '{{british}}'.",
-      replaceWith: "Replace '{{british}}' with '{{american}}'."
+      usePreferred: "Prefer the {{preferred}} spelling '{{to}}' over the {{offending}} '{{from}}'.",
+      replaceWith: "Replace '{{from}}' with '{{to}}'."
     },
     schema: [
       {
         type: 'object',
         properties: {
+          dialect: { enum: ['american', 'british'] },
           identifiers: { type: 'boolean' },
           comments: { type: 'boolean' },
           strings: { type: 'boolean' },
@@ -85,12 +97,15 @@ export const americanSpellingRule: Rule.RuleModule = {
       sourceCode,
       options: [unresolvedOptions]
     } = context;
-    const { allow, comments, strings, identifiers } = resolveOptions(unresolvedOptions);
+    const { dialect, allow, comments, strings, identifiers } = resolveOptions(unresolvedOptions);
     const allowed: ReadonlySet<string> = new Set(allow);
 
+    const preferredLabel: string = DIALECT_LABEL[dialect];
+    const offendingLabel: string = dialect === 'american' ? DIALECT_LABEL.british : DIALECT_LABEL.american;
+
     function relevantMatches(text: string): ISpellingMatch[] {
-      return findBritishSpellings(text).filter(
-        (match: ISpellingMatch): boolean => !allowed.has(match.british)
+      return findNonPreferredSpellings(text, dialect).filter(
+        (match: ISpellingMatch): boolean => !allowed.has(match.from)
       );
     }
 
@@ -101,23 +116,28 @@ export const americanSpellingRule: Rule.RuleModule = {
     function reportSpan(start: number, end: number, fixable: boolean): void {
       const text: string = sourceCode.getText().slice(start, end);
 
-      for (const { index, word, american } of relevantMatches(text)) {
+      for (const { index, word, to } of relevantMatches(text)) {
         const matchStart: number = start + index;
         const matchEnd: number = matchStart + word.length;
         const loc: { start: Position; end: Position } = {
           start: sourceCode.getLocFromIndex(matchStart),
           end: sourceCode.getLocFromIndex(matchEnd)
         };
-        const data: Record<string, string> = { british: word, american };
+        const data: Record<string, string> = {
+          from: word,
+          to,
+          preferred: preferredLabel,
+          offending: offendingLabel
+        };
         const applyFix: (fixer: Rule.RuleFixer) => Rule.Fix = (fixer: Rule.RuleFixer): Rule.Fix =>
-          fixer.replaceTextRange([matchStart, matchEnd], american);
+          fixer.replaceTextRange([matchStart, matchEnd], to);
 
         if (fixable) {
-          context.report({ loc, messageId: 'useAmerican', data, fix: applyFix });
+          context.report({ loc, messageId: 'usePreferred', data, fix: applyFix });
         } else {
           context.report({
             loc,
-            messageId: 'useAmerican',
+            messageId: 'usePreferred',
             data,
             suggest: [{ messageId: 'replaceWith', data, fix: applyFix }]
           });
@@ -131,7 +151,7 @@ export const americanSpellingRule: Rule.RuleModule = {
     function reportIdentifier(node: Identifier | PrivateIdentifier): void {
       const { range: [start] = [0], name: text } = node;
 
-      for (const { index, word, american } of relevantMatches(text)) {
+      for (const { index, word, to } of relevantMatches(text)) {
         const matchStart: number = start + index;
         const matchEnd: number = matchStart + word.length;
 
@@ -140,8 +160,8 @@ export const americanSpellingRule: Rule.RuleModule = {
             start: sourceCode.getLocFromIndex(matchStart),
             end: sourceCode.getLocFromIndex(matchEnd)
           },
-          messageId: 'useAmerican',
-          data: { british: word, american }
+          messageId: 'usePreferred',
+          data: { from: word, to, preferred: preferredLabel, offending: offendingLabel }
         });
       }
     }
