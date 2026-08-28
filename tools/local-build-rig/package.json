@@ -8,9 +8,9 @@
     "_phase:build": ""
   },
   "dependencies": {
-    "@microsoft/api-extractor": "7.58.12",
-    "@rushstack/heft": "1.2.23",
-    "@rushstack/heft-node-rig": "2.11.46",
+    "@microsoft/api-extractor": "7.59.0",
+    "@rushstack/heft": "1.2.25",
+    "@rushstack/heft-node-rig": "2.11.48",
     "@types/jest": "~30.0.0",
     "@types/node": "~24.13.2",
     "eslint": "~9.37.0",
