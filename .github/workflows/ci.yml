@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref (e.g. new pushes to a PR branch).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history so `rush change --verify` can diff a PR against origin/main.
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      # Rush downloads its own pnpm; cache the toolchain and the content-addressable store
+      # so installs are fast without ever bypassing the frozen lockfile.
+      - name: Cache Rush toolchain
+        uses: actions/cache@v4
+        with:
+          path: ~/.rush
+          key: ${{ runner.os }}-rush-${{ hashFiles('rush.json') }}
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: common/temp/pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('common/config/rush/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      # PR-only: fail early if a change to a publishable package has no change file.
+      - name: Verify change files
+        if: github.event_name == 'pull_request'
+        run: node common/scripts/install-run-rush.js change --verify
+
+      - name: Install
+        run: node common/scripts/install-run-rush.js install
+
+      # `rush test` runs the build phase (which includes the zero-warning lint) and then the
+      # test phase, across every project.
+      - name: Build and test
+        run: node common/scripts/install-run-rush.js test --verbose
