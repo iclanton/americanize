@@ -46,7 +46,7 @@ export function matchCase(source: string, replacement: string): string {
  * first (see {@link findBritishSpellings}).
  */
 export function getAmericanSpelling(word: string): string | undefined {
-  const american: string | undefined = BRITISH_TO_AMERICAN[word.toLowerCase()];
+  const american: string | undefined = BRITISH_TO_AMERICAN.get(word.toLowerCase());
   if (american === undefined) {
     return undefined;
   }
@@ -56,7 +56,7 @@ export function getAmericanSpelling(word: string): string | undefined {
 
 /** Whether `word` is a known British spelling with a distinct American form. */
 export function isBritishSpelling(word: string): boolean {
-  return Object.prototype.hasOwnProperty.call(BRITISH_TO_AMERICAN, word.toLowerCase());
+  return BRITISH_TO_AMERICAN.has(word.toLowerCase());
 }
 
 /** One British spelling found inside a larger piece of text, with where it was found. */
