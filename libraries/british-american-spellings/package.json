@@ -1,6 +1,6 @@
 {
   "name": "@americanize/british-american-spellings",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "A reviewable table of British -> American word spellings, with case-preserving lookup helpers.",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",

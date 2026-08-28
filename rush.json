@@ -23,7 +23,7 @@
 
   "repository": {
     "defaultBranch": "main",
-    "defaultRemote": "origin"
+    "url": "https://github.com/iclanton/americanize.git"
   },
 
   "eventHooks": {
