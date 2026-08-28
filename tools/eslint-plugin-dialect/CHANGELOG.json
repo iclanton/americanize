@@ -2,6 +2,18 @@
   "name": "eslint-plugin-dialect",
   "entries": [
     {
+      "version": "0.2.0",
+      "tag": "eslint-plugin-dialect_v0.2.0",
+      "date": "Fri, 28 Aug 2026 09:31:15 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Stop flagging package names in import/require specifiers; add an `importPaths` option (default true) to check the in-package file path, report-only. Auto-fix string and template-string spellings so `eslint --fix` corrects them (previously suggestion-only)."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.1.0",
       "tag": "eslint-plugin-dialect_v0.1.0",
       "date": "Fri, 28 Aug 2026 08:05:44 GMT",
