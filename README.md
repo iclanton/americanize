@@ -83,11 +83,12 @@ module.exports = [
       'dialect/consistent-spelling': [
         'error',
         {
-          dialect: 'american', // or 'british' to enforce British spellings instead
-          identifiers: true, //  variable, function, class and member names
-          comments: true, //     line and block comments
-          strings: true, //      string literals and template strings
-          allow: [] //           spellings to leave alone (e.g. a third-party API)
+          dialect: 'american', //   or 'british' to enforce British spellings instead
+          identifiers: true, //     variable, function, class and member names
+          comments: true, //        line and block comments
+          strings: true, //         string literals and template strings
+          includeAmbiguous: false, // when british, also flag program/disk/analog/dialog
+          allow: [] //              spellings to leave alone (e.g. a third-party API)
         }
       ]
     }
@@ -114,3 +115,12 @@ module.exports = [
   would break the build, so it flags the name and leaves the rename to you. Only binding
   positions (declarations, parameters, and members you define) are checked — never a
   property read or an imported name you cannot rename.
+
+### Ambiguous spellings (British direction)
+
+Some American spellings are accepted in British English too, especially in computing —
+`program`, `disk`, `analog`, `dialog` (a *computer program*, a *hard disk* and a UI *dialog*
+are spelled that way on both sides of the Atlantic). When enforcing British, these are left
+alone by default. Set `includeAmbiguous: true` to steer them to `programme`, `disc`,
+`analogue` and `dialogue` as well. The set is exported as `AMBIGUOUS_AMERICAN_SPELLINGS`.
+

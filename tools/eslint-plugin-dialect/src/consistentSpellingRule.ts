@@ -16,6 +16,12 @@ export interface IConsistentSpellingOptions {
   readonly comments: boolean;
   /** Check string literals and template strings. Defaults to `true`. */
   readonly strings: boolean;
+  /**
+   * When enforcing British, also flag American spellings that are widely accepted in British
+   * English anyway (`program`, `disk`, `analog`, `dialog`). No effect for American. Defaults
+   * to `false`.
+   */
+  readonly includeAmbiguous: boolean;
   /** Non-preferred spellings to leave alone, lower-cased (e.g. a third-party API you cannot rename). */
   readonly allow: readonly string[];
 }
@@ -25,6 +31,7 @@ const DEFAULT_OPTIONS: IConsistentSpellingOptions = {
   identifiers: true,
   comments: true,
   strings: true,
+  includeAmbiguous: false,
   allow: []
 };
 
@@ -82,6 +89,7 @@ export const consistentSpellingRule: Rule.RuleModule = {
           identifiers: { type: 'boolean' },
           comments: { type: 'boolean' },
           strings: { type: 'boolean' },
+          includeAmbiguous: { type: 'boolean' },
           allow: {
             type: 'array',
             items: { type: 'string' }
@@ -97,14 +105,15 @@ export const consistentSpellingRule: Rule.RuleModule = {
       sourceCode,
       options: [unresolvedOptions]
     } = context;
-    const { dialect, allow, comments, strings, identifiers } = resolveOptions(unresolvedOptions);
+    const { dialect, allow, comments, strings, identifiers, includeAmbiguous } =
+      resolveOptions(unresolvedOptions);
     const allowed: ReadonlySet<string> = new Set(allow);
 
     const preferredLabel: string = DIALECT_LABEL[dialect];
     const offendingLabel: string = dialect === 'american' ? DIALECT_LABEL.british : DIALECT_LABEL.american;
 
     function relevantMatches(text: string): ISpellingMatch[] {
-      return findNonPreferredSpellings(text, dialect).filter(
+      return findNonPreferredSpellings(text, dialect, { includeAmbiguous }).filter(
         (match: ISpellingMatch): boolean => !allowed.has(match.from)
       );
     }

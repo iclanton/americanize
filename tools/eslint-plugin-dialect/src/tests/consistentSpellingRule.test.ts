@@ -30,7 +30,11 @@ ruleTester.run('consistent-spelling', consistentSpellingRule, {
     { code: "const s = 'colour';", options: [{ strings: false }] },
     // With the British dialect selected, British spellings are the valid ones.
     { code: 'const colour = 1;', options: [{ dialect: 'british' }] },
-    { code: '// the colour', options: [{ dialect: 'british' }] }
+    { code: '// the colour', options: [{ dialect: 'british' }] },
+    // Ambiguous American spellings (program, disk, ...) are left alone under British by
+    // default, since they are accepted in British English too.
+    { code: '// the program writes to disk', options: [{ dialect: 'british' }] },
+    { code: 'const dialog = 1;', options: [{ dialect: 'british' }] }
   ],
   invalid: [
     // Identifiers are report-only: flagged, but never rewritten.
@@ -131,6 +135,22 @@ ruleTester.run('consistent-spelling', consistentSpellingRule, {
           messageId: 'usePreferred',
           data: { from: 'normalize', to: 'normalise', preferred: 'British', offending: 'American' },
           suggestions: [{ messageId: 'replaceWith', output: 'const s = `please normalise`;' }]
+        }
+      ]
+    },
+    // includeAmbiguous opts the accepted-either-way spellings back in (British direction).
+    {
+      code: '// the program on disk',
+      options: [{ dialect: 'british', includeAmbiguous: true }],
+      output: '// the programme on disc',
+      errors: [
+        {
+          messageId: 'usePreferred',
+          data: { from: 'program', to: 'programme', preferred: 'British', offending: 'American' }
+        },
+        {
+          messageId: 'usePreferred',
+          data: { from: 'disk', to: 'disc', preferred: 'British', offending: 'American' }
         }
       ]
     }

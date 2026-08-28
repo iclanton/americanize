@@ -1,6 +1,7 @@
 /*! Copyright (c) Ian Clanton-Thuon. All rights reserved. */
 
 import {
+  AMBIGUOUS_AMERICAN_SPELLINGS,
   AMERICAN_TO_BRITISH,
   BRITISH_TO_AMERICAN,
   findAmericanSpellings,
@@ -156,6 +157,40 @@ describe(findAmericanSpellings.name, () => {
 
   it('is equivalent to findNonPreferredSpellings with the british target', () => {
     expect(findAmericanSpellings('color')).toEqual(findNonPreferredSpellings('color', 'british'));
+  });
+});
+
+describe('ambiguous American spellings', () => {
+  it('are not steered to British by default', () => {
+    // `program`, `disk`, `analog` and `dialog` are all accepted in British English.
+    expect(getBritishSpelling('program')).toBeUndefined();
+    expect(getBritishSpelling('disk')).toBeUndefined();
+    expect(isAmericanSpelling('program')).toBe(false);
+    expect(findAmericanSpellings('the program on disk uses a dialog')).toEqual([]);
+  });
+
+  it('are steered to British when includeAmbiguous is set', () => {
+    expect(getBritishSpelling('program', { includeAmbiguous: true })).toBe('programme');
+    expect(getBritishSpelling('Disk', { includeAmbiguous: true })).toBe('Disc');
+    expect(isAmericanSpelling('program', { includeAmbiguous: true })).toBe(true);
+
+    const matches: ISpellingMatch[] = findAmericanSpellings('the program on disk', {
+      includeAmbiguous: true
+    });
+    expect(matches.map((match: ISpellingMatch): string => match.to)).toEqual(['programme', 'disc']);
+  });
+
+  it('do not affect the American direction', () => {
+    // Going the other way, the British forms are still corrected to American as usual.
+    expect(getAmericanSpelling('programme')).toBe('program');
+    expect(getAmericanSpelling('disc')).toBe('disk');
+    expect(isBritishSpelling('programme')).toBe(true);
+  });
+
+  it('are all present as American spellings in the table', () => {
+    for (const word of AMBIGUOUS_AMERICAN_SPELLINGS) {
+      expect(AMERICAN_TO_BRITISH.has(word)).toBe(true);
+    }
   });
 });
 

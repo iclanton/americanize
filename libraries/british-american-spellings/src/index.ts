@@ -5,6 +5,39 @@ import { AMERICAN_TO_BRITISH, BRITISH_TO_AMERICAN } from './britishAmericanSpell
 /** Which English is being enforced: `'american'` steers toward American spellings, `'british'` toward British. */
 export type SpellingDialect = 'american' | 'british';
 
+/**
+ * American spellings that are also widely accepted in British English — chiefly because the
+ * American form is the usual one in computing and science — so enforcing a British-only
+ * alternative on them tends to be wrong. These are skipped when enforcing British unless
+ * {@link ISpellingLookupOptions.includeAmbiguous} is set.
+ *
+ * - `program`/`programs`: a *computer* program is spelled `program` in British English too;
+ *   `programme` is the TV-listing / event sense.
+ * - `disk`/`disks`: `disk` is standard for storage (hard disk); `disc` is the other senses.
+ * - `analog`/`analogs`: `analog` is the usual electronics spelling.
+ * - `dialog`/`dialogs`: a UI `dialog` (box) is spelled this way; `dialogue` is conversation.
+ */
+export const AMBIGUOUS_AMERICAN_SPELLINGS: ReadonlySet<string> = new Set([
+  'program',
+  'programs',
+  'disk',
+  'disks',
+  'analog',
+  'analogs',
+  'dialog',
+  'dialogs'
+]);
+
+/** Options shared by the dialect-aware lookups. */
+export interface ISpellingLookupOptions {
+  /**
+   * When enforcing British spellings, also flag American spellings in
+   * {@link AMBIGUOUS_AMERICAN_SPELLINGS} (`program`, `disk`, `analog`, `dialog`). Has no
+   * effect when enforcing American. Defaults to `false`.
+   */
+  readonly includeAmbiguous?: boolean;
+}
+
 /** One non-preferred spelling and the preferred spelling it should be replaced with. */
 export interface ISpellingCorrection {
   /** The offending (non-preferred) spelling, lower-cased. */
@@ -17,6 +50,16 @@ export interface ISpellingCorrection {
 // we look words up in the British->American table, and vice versa.
 function tableFor(target: SpellingDialect): ReadonlyMap<string, string> {
   return target === 'american' ? BRITISH_TO_AMERICAN : AMERICAN_TO_BRITISH;
+}
+
+// Whether a word should be left alone as an accepted-either-way spelling. Only bites when
+// enforcing British, since the ambiguous set holds American spellings.
+function isExcludedAsAmbiguous(
+  lowerWord: string,
+  target: SpellingDialect,
+  includeAmbiguous: boolean
+): boolean {
+  return target === 'british' && !includeAmbiguous && AMBIGUOUS_AMERICAN_SPELLINGS.has(lowerWord);
 }
 
 /**
@@ -55,8 +98,18 @@ export function matchCase(source: string, replacement: string): string {
  * dialect or simply unknown. The lookup is whole-word only: callers are responsible for
  * splitting identifiers and prose into words first (see {@link findNonPreferredSpellings}).
  */
-export function getPreferredSpelling(word: string, target: SpellingDialect): string | undefined {
-  const preferred: string | undefined = tableFor(target).get(word.toLowerCase());
+export function getPreferredSpelling(
+  word: string,
+  target: SpellingDialect,
+  options: ISpellingLookupOptions = {}
+): string | undefined {
+  const { includeAmbiguous = false } = options;
+  const lower: string = word.toLowerCase();
+  if (isExcludedAsAmbiguous(lower, target, includeAmbiguous)) {
+    return undefined;
+  }
+
+  const preferred: string | undefined = tableFor(target).get(lower);
   if (preferred === undefined) {
     return undefined;
   }
@@ -65,8 +118,18 @@ export function getPreferredSpelling(word: string, target: SpellingDialect): str
 }
 
 /** Whether `word` is a known non-preferred spelling for `target` (i.e. it has a distinct preferred form). */
-export function isNonPreferredSpelling(word: string, target: SpellingDialect): boolean {
-  return tableFor(target).has(word.toLowerCase());
+export function isNonPreferredSpelling(
+  word: string,
+  target: SpellingDialect,
+  options: ISpellingLookupOptions = {}
+): boolean {
+  const { includeAmbiguous = false } = options;
+  const lower: string = word.toLowerCase();
+  if (isExcludedAsAmbiguous(lower, target, includeAmbiguous)) {
+    return false;
+  }
+
+  return tableFor(target).has(lower);
 }
 
 /** Looks up the American spelling of a British word. Shorthand for {@link getPreferredSpelling} with `'american'`. */
@@ -75,8 +138,8 @@ export function getAmericanSpelling(word: string): string | undefined {
 }
 
 /** Looks up the British spelling of an American word. Shorthand for {@link getPreferredSpelling} with `'british'`. */
-export function getBritishSpelling(word: string): string | undefined {
-  return getPreferredSpelling(word, 'british');
+export function getBritishSpelling(word: string, options: ISpellingLookupOptions = {}): string | undefined {
+  return getPreferredSpelling(word, 'british', options);
 }
 
 /** Whether `word` is a known British spelling with a distinct American form. */
@@ -85,8 +148,8 @@ export function isBritishSpelling(word: string): boolean {
 }
 
 /** Whether `word` is a known American spelling with a distinct British form. */
-export function isAmericanSpelling(word: string): boolean {
-  return isNonPreferredSpelling(word, 'british');
+export function isAmericanSpelling(word: string, options: ISpellingLookupOptions = {}): boolean {
+  return isNonPreferredSpelling(word, 'british', options);
 }
 
 /** One non-preferred spelling found inside a larger piece of text, with where it was found. */
@@ -111,11 +174,15 @@ const WORD_PATTERN: RegExp = /[A-Za-z]+/g;
  * boundaries are also split, so `favouriteColour` yields both `favourite` and `colour`.
  * Matches are returned in the order they appear.
  */
-export function findNonPreferredSpellings(text: string, target: SpellingDialect): ISpellingMatch[] {
+export function findNonPreferredSpellings(
+  text: string,
+  target: SpellingDialect,
+  options: ISpellingLookupOptions = {}
+): ISpellingMatch[] {
   const matches: ISpellingMatch[] = [];
 
   for (const { value, index } of splitWords(text)) {
-    const to: string | undefined = getPreferredSpelling(value, target);
+    const to: string | undefined = getPreferredSpelling(value, target, options);
     if (to !== undefined) {
       matches.push({
         word: value,
@@ -135,8 +202,8 @@ export function findBritishSpellings(text: string): ISpellingMatch[] {
 }
 
 /** Finds every American spelling in `text`. Shorthand for {@link findNonPreferredSpellings} with `'british'`. */
-export function findAmericanSpellings(text: string): ISpellingMatch[] {
-  return findNonPreferredSpellings(text, 'british');
+export function findAmericanSpellings(text: string, options: ISpellingLookupOptions = {}): ISpellingMatch[] {
+  return findNonPreferredSpellings(text, 'british', options);
 }
 
 interface IWordToken {
