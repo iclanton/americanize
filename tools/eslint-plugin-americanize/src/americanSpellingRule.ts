@@ -30,15 +30,14 @@ function resolveOptions(raw: unknown): IAmericanSpellingOptions {
     return DEFAULT_OPTIONS;
   }
 
-  const provided: Partial<IAmericanSpellingOptions> = raw as Partial<IAmericanSpellingOptions>;
-  const allow: readonly string[] = (provided.allow ?? DEFAULT_OPTIONS.allow).map((word: string): string =>
+  const options: Partial<IAmericanSpellingOptions> = raw as Partial<IAmericanSpellingOptions>;
+  const allow: readonly string[] = (options.allow ?? DEFAULT_OPTIONS.allow).map((word: string): string =>
     word.toLowerCase()
   );
 
   return {
-    identifiers: provided.identifiers ?? DEFAULT_OPTIONS.identifiers,
-    comments: provided.comments ?? DEFAULT_OPTIONS.comments,
-    strings: provided.strings ?? DEFAULT_OPTIONS.strings,
+    ...DEFAULT_OPTIONS,
+    ...options,
     allow
   };
 }
