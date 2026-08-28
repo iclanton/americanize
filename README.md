@@ -1,5 +1,7 @@
 # americanize
 
+[![CI](https://github.com/iclanton/americanize/actions/workflows/ci.yml/badge.svg)](https://github.com/iclanton/americanize/actions/workflows/ci.yml)
+
 A [Rush](https://rushjs.io/) monorepo of TypeScript projects, built with
 [Heft](https://heft.rushstack.io/), that keeps a codebase writing a single English dialect —
 American by default, or British.

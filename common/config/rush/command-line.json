@@ -72,6 +72,13 @@
 
   "parameters": [
     {
+      "longName": "--production",
+      "parameterKind": "flag",
+      "description": "Perform a production build (passed through to Heft).",
+      "associatedPhases": ["_phase:build", "_phase:test"],
+      "associatedCommands": ["build", "rebuild", "test", "retest"]
+    },
+    {
       "longName": "--fix",
       "parameterKind": "flag",
       "description": "Automatically fix problems encountered while linting",

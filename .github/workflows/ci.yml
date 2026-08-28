@@ -53,6 +53,6 @@ jobs:
         run: node common/scripts/install-run-rush.js install
 
       # `rush test` runs the build phase (which includes the zero-warning lint) and then the
-      # test phase, across every project.
+      # test phase, across every project. `--production` is passed through to Heft.
       - name: Build and test
-        run: node common/scripts/install-run-rush.js test --verbose
+        run: node common/scripts/install-run-rush.js test --production --verbose
