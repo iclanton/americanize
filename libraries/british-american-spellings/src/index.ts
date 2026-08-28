@@ -85,12 +85,13 @@ export function findBritishSpellings(text: string): ISpellingMatch[] {
   const matches: ISpellingMatch[] = [];
 
   for (const rawWord of splitWords(text)) {
-    const american: string | undefined = getAmericanSpelling(rawWord.value);
+    const { value, index } = rawWord;
+    const american: string | undefined = getAmericanSpelling(value);
     if (american !== undefined) {
       matches.push({
-        word: rawWord.value,
-        index: rawWord.index,
-        british: rawWord.value.toLowerCase(),
+        word: value,
+        index,
+        british: value.toLowerCase(),
         american
       });
     }

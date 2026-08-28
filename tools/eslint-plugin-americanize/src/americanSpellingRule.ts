@@ -100,15 +100,16 @@ export const americanSpellingRule: Rule.RuleModule = {
       const text: string = sourceCode.getText().slice(start, end);
 
       for (const match of relevantMatches(text)) {
-        const matchStart: number = start + match.index;
-        const matchEnd: number = matchStart + match.word.length;
+        const { index, word, american } = match;
+        const matchStart: number = start + index;
+        const matchEnd: number = matchStart + word.length;
         const loc: { start: Position; end: Position } = {
           start: sourceCode.getLocFromIndex(matchStart),
           end: sourceCode.getLocFromIndex(matchEnd)
         };
-        const data: Record<string, string> = { british: match.word, american: match.american };
+        const data: Record<string, string> = { british: word, american };
         const applyFix: (fixer: Rule.RuleFixer) => Rule.Fix = (fixer: Rule.RuleFixer): Rule.Fix =>
-          fixer.replaceTextRange([matchStart, matchEnd], match.american);
+          fixer.replaceTextRange([matchStart, matchEnd], american);
 
         if (fixable) {
           context.report({ loc, messageId: 'useAmerican', data, fix: applyFix });
@@ -131,8 +132,9 @@ export const americanSpellingRule: Rule.RuleModule = {
       const text: string = node.name;
 
       for (const match of relevantMatches(text)) {
-        const matchStart: number = start + match.index;
-        const matchEnd: number = matchStart + match.word.length;
+        const { index, word, american } = match;
+        const matchStart: number = start + index;
+        const matchEnd: number = matchStart + word.length;
 
         context.report({
           loc: {
@@ -140,7 +142,7 @@ export const americanSpellingRule: Rule.RuleModule = {
             end: sourceCode.getLocFromIndex(matchEnd)
           },
           messageId: 'useAmerican',
-          data: { british: match.word, american: match.american }
+          data: { british: word, american }
         });
       }
     }

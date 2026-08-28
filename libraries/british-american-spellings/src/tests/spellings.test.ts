@@ -67,10 +67,12 @@ describe(findBritishSpellings.name, () => {
     const matches: ISpellingMatch[] = findBritishSpellings('default_colour_value');
 
     expect(matches).toHaveLength(1);
-    expect(matches[0]?.british).toBe('colour');
-    expect(matches[0]?.american).toBe('color');
-    expect(matches[0]?.word).toBe('colour');
-    expect(matches[0]?.index).toBe('default_'.length);
+
+    const [match] = matches;
+    expect(match?.british).toBe('colour');
+    expect(match?.american).toBe('color');
+    expect(match?.word).toBe('colour');
+    expect(match?.index).toBe('default_'.length);
   });
 
   it('splits camelCase and reports each offending sub-word', () => {
