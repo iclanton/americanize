@@ -4,7 +4,12 @@
   "extends": "../../node_modules/@rushstack/heft-node-rig/profiles/default/tsconfig-base.json",
 
   "compilerOptions": {
-    "outDir": "${configDir}/lib",
+    // Repo-wide output layout: CommonJS to lib-commonjs/ and type declarations to lib-dts/.
+    // A project that also wants an ESM build adds `additionalModuleKindsToEmit` (esnext ->
+    // lib-esm) in its own config/typescript.json. The bare `lib/` name survives only as an
+    // `exports` subpath that routes to the right variant folder.
+    "outDir": "${configDir}/lib-commonjs",
+    "declarationDir": "${configDir}/lib-dts",
     "rootDir": "${configDir}/src",
 
     "resolveJsonModule": true,

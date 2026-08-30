@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "eslint-plugin-dialect",
+      "comment": "Adopt the repo-wide build layout: CommonJS output moves to lib-commonjs and type declarations to lib-dts, wired through the exports map (require -> lib-commonjs, types -> lib-dts). The plugin remains CommonJS, as ESLint loads plugins via require.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "eslint-plugin-dialect",
+  "email": "iclanton@users.noreply.github.com"
+}

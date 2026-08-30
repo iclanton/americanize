@@ -11,5 +11,20 @@
   "coverageDirectory": "<rootDir>/coverage",
 
   // cobertura for Azure Pipelines to ingest, html for a human chasing a specific gap.
-  "coverageReporters": ["cobertura", "html"]
+  "coverageReporters": ["cobertura", "html"],
+
+  // The CommonJS build emits to lib-commonjs/ (see the rig tsconfig-base), so point Jest —
+  // which runs the compiled output — there instead of the inherited lib/. These arrays
+  // replace the ones from the shared Jest config.
+  "roots": ["<rootDir>/lib-commonjs"],
+  "testMatch": ["<rootDir>/lib-commonjs/**/*.test.{cjs,js}"],
+  "collectCoverageFrom": [
+    "lib-commonjs/**/*.{cjs,js}",
+    "!lib-commonjs/**/*.d.ts",
+    "!lib-commonjs/**/*.test.{cjs,js}",
+    "!lib-commonjs/**/test/**",
+    "!lib-commonjs/**/__tests__/**",
+    "!lib-commonjs/**/__fixtures__/**",
+    "!lib-commonjs/**/__mocks__/**"
+  ]
 }

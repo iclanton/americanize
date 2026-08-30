@@ -20,8 +20,19 @@
   "bugs": "https://github.com/iclanton/americanize/issues",
   "license": "MIT",
   "author": "Ian Clanton-Thuon",
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "main": "./lib-commonjs/index.js",
+  "types": "./lib-dts/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib-dts/index.d.ts",
+      "require": "./lib-commonjs/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib-commonjs",
+    "lib-dts"
+  ],
   "peerDependencies": {
     "eslint": ">=9.0.0"
   },

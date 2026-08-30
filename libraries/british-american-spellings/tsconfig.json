@@ -1,11 +1,3 @@
 {
-  "extends": "@americanize/local-build-rig/profiles/node/tsconfig-base.json",
-
-  "compilerOptions": {
-    // The default CommonJS emit goes to lib-commonjs/; the ESM emit (config/typescript.json)
-    // goes to lib-esm/; declarations are shared from lib-dts/. The bare `lib/` name is kept
-    // only as a virtual `exports` subpath that routes to the right variant folder.
-    "outDir": "${configDir}/lib-commonjs",
-    "declarationDir": "${configDir}/lib-dts"
-  }
+  "extends": "@americanize/local-build-rig/profiles/node/tsconfig-base.json"
 }
