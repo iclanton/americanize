@@ -1,10 +1,10 @@
 {
-  "programme": "program",
-  "programmes": "programs",
-  "disc": "disk",
-  "discs": "disks",
-  "dialogue": "dialog",
-  "dialogues": "dialogs",
-  "analogue": "analog",
-  "analogues": "analogs"
+  "programme": { "american": "program", "canadian": "program", "australian": "program" },
+  "programmes": { "american": "programs", "canadian": "programs", "australian": "programs" },
+  "disc": { "american": "disk", "canadian": "disk", "australian": "disk" },
+  "discs": { "american": "disks", "canadian": "disks", "australian": "disks" },
+  "dialogue": { "american": "dialog", "canadian": "dialog", "australian": "dialog" },
+  "dialogues": { "american": "dialogs", "canadian": "dialogs", "australian": "dialogs" },
+  "analogue": { "american": "analog", "canadian": "analog", "australian": "analog" },
+  "analogues": { "american": "analogs", "canadian": "analogs", "australian": "analogs" }
 }

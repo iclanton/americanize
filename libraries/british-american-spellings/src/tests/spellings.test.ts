@@ -5,10 +5,14 @@ import {
   AMERICAN_TO_BRITISH,
   BRITISH_TO_AMERICAN,
   findAmericanSpellings,
+  findAustralianSpellings,
   findBritishSpellings,
+  findCanadianSpellings,
   findNonPreferredSpellings,
   getAmericanSpelling,
+  getAustralianSpelling,
   getBritishSpelling,
+  getCanadianSpelling,
   isAmericanSpelling,
   isBritishSpelling,
   matchCase
@@ -226,5 +230,88 @@ describe(`${BRITISH_TO_AMERICAN.constructor.name} tables`, () => {
     for (const [american, british] of AMERICAN_TO_BRITISH) {
       expect(BRITISH_TO_AMERICAN.get(british)).toBe(american);
     }
+  });
+});
+
+describe(getCanadianSpelling.name, () => {
+  it('keeps British -our/-re/-ce spellings', () => {
+    // Canadian English follows British for these families.
+    expect(getCanadianSpelling('color')).toBe('colour');
+    expect(getCanadianSpelling('center')).toBe('centre');
+    expect(getCanadianSpelling('defense')).toBe('defence');
+    expect(getCanadianSpelling('behavior')).toBe('behaviour');
+  });
+
+  it('takes American -ize/-yze endings', () => {
+    // The one place Canadian sides with American: -ize/-yze verbs and their inflections.
+    expect(getCanadianSpelling('organise')).toBe('organize');
+    expect(getCanadianSpelling('realise')).toBe('realize');
+    expect(getCanadianSpelling('analyse')).toBe('analyze');
+  });
+
+  it('takes a handful of American forms Canadians prefer', () => {
+    expect(getCanadianSpelling('aluminium')).toBe('aluminum');
+    expect(getCanadianSpelling('aeroplane')).toBe('airplane');
+  });
+
+  it('returns undefined for words already in Canadian form', () => {
+    expect(getCanadianSpelling('colour')).toBeUndefined();
+    expect(getCanadianSpelling('organize')).toBeUndefined();
+    expect(getCanadianSpelling('aluminum')).toBeUndefined();
+  });
+
+  it('preserves the casing of the input word', () => {
+    expect(getCanadianSpelling('Organise')).toBe('Organize');
+    expect(getCanadianSpelling('COLOR')).toBe('COLOUR');
+  });
+});
+
+describe(getAustralianSpelling.name, () => {
+  it('follows British spellings, including -ise endings', () => {
+    expect(getAustralianSpelling('color')).toBe('colour');
+    expect(getAustralianSpelling('center')).toBe('centre');
+    expect(getAustralianSpelling('organize')).toBe('organise');
+    expect(getAustralianSpelling('analyze')).toBe('analyse');
+  });
+
+  it('takes the few American forms Australians prefer', () => {
+    // VarCon marks these with the Australian primary tag.
+    expect(getAustralianSpelling('enquire')).toBe('inquire');
+    expect(getAustralianSpelling('liquorice')).toBe('licorice');
+  });
+
+  it('returns undefined for words already in Australian form', () => {
+    expect(getAustralianSpelling('colour')).toBeUndefined();
+    expect(getAustralianSpelling('organise')).toBeUndefined();
+    expect(getAustralianSpelling('inquire')).toBeUndefined();
+  });
+});
+
+describe(findCanadianSpellings.name, () => {
+  it('steers a mixed sentence to Canadian', () => {
+    const matches: ISpellingMatch[] = findCanadianSpellings(
+      'Initialise the color of the neighbor before you analyse it.'
+    );
+    const to: string[] = matches.map((match: ISpellingMatch): string => match.to);
+
+    // British -ise/-yse take the American -ize/-yze; American -or takes the British -our.
+    expect(to).toEqual(['Initialize', 'colour', 'neighbour', 'analyze']);
+  });
+
+  it('leaves wholly Canadian text untouched', () => {
+    expect(findCanadianSpellings('initialize the colour of the neighbour')).toEqual([]);
+  });
+});
+
+describe(findAustralianSpellings.name, () => {
+  it('steers a mixed sentence to Australian', () => {
+    const matches: ISpellingMatch[] = findAustralianSpellings('Organize the color scheme');
+    const to: string[] = matches.map((match: ISpellingMatch): string => match.to);
+
+    expect(to).toEqual(['Organise', 'colour']);
+  });
+
+  it('is equivalent to findNonPreferredSpellings with the australian target', () => {
+    expect(findAustralianSpellings('color')).toEqual(findNonPreferredSpellings('color', 'australian'));
   });
 });

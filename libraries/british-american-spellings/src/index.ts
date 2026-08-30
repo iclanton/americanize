@@ -1,13 +1,20 @@
 /*! Copyright (c) Ian Clanton-Thuon. All rights reserved. */
 
-import { AMERICAN_TO_BRITISH, BRITISH_TO_AMERICAN } from './britishAmericanSpellings';
+import {
+  AMERICAN_TO_BRITISH,
+  BRITISH_TO_AMERICAN,
+  TO_AUSTRALIAN,
+  TO_CANADIAN
+} from './britishAmericanSpellings';
 
 /**
- * Which English is being enforced: `'american'` steers toward American spellings, `'british'` toward British.
+ * Which English is being enforced: `'american'` steers toward American spellings, `'british'`
+ * toward British, `'canadian'` toward Canadian (British spellings but with American `-ize`
+ * endings) and `'australian'` toward Australian (close to British).
  *
  * @public
  */
-export type SpellingDialect = 'american' | 'british';
+export type SpellingDialect = 'american' | 'british' | 'canadian' | 'australian';
 
 /**
  * American spellings that are also widely accepted in British English - chiefly because the
@@ -65,7 +72,16 @@ export interface ISpellingCorrection {
 // The translation table that steers *toward* a target dialect: to enforce American spellings
 // we look words up in the British->American table, and vice versa.
 function tableFor(target: SpellingDialect): ReadonlyMap<string, string> {
-  return target === 'american' ? BRITISH_TO_AMERICAN : AMERICAN_TO_BRITISH;
+  switch (target) {
+    case 'american':
+      return BRITISH_TO_AMERICAN;
+    case 'british':
+      return AMERICAN_TO_BRITISH;
+    case 'canadian':
+      return TO_CANADIAN;
+    case 'australian':
+      return TO_AUSTRALIAN;
+  }
 }
 
 // Whether a word should be left alone as an accepted-either-way spelling. Only bites when
@@ -175,6 +191,24 @@ export function getBritishSpelling(word: string, options: ISpellingLookupOptions
 }
 
 /**
+ * Looks up the Canadian spelling of a word. Shorthand for {@link getPreferredSpelling} with `'canadian'`.
+ *
+ * @public
+ */
+export function getCanadianSpelling(word: string): string | undefined {
+  return getPreferredSpelling(word, 'canadian');
+}
+
+/**
+ * Looks up the Australian spelling of a word. Shorthand for {@link getPreferredSpelling} with `'australian'`.
+ *
+ * @public
+ */
+export function getAustralianSpelling(word: string): string | undefined {
+  return getPreferredSpelling(word, 'australian');
+}
+
+/**
  * Whether `word` is a known British spelling with a distinct American form.
  *
  * @public
@@ -279,6 +313,24 @@ export function findBritishSpellings(text: string): ISpellingMatch[] {
  */
 export function findAmericanSpellings(text: string, options: ISpellingLookupOptions = {}): ISpellingMatch[] {
   return findNonPreferredSpellings(text, 'british', options);
+}
+
+/**
+ * Finds every non-Canadian spelling in `text`. Shorthand for {@link findNonPreferredSpellings} with `'canadian'`.
+ *
+ * @public
+ */
+export function findCanadianSpellings(text: string): ISpellingMatch[] {
+  return findNonPreferredSpellings(text, 'canadian');
+}
+
+/**
+ * Finds every non-Australian spelling in `text`. Shorthand for {@link findNonPreferredSpellings} with `'australian'`.
+ *
+ * @public
+ */
+export function findAustralianSpellings(text: string): ISpellingMatch[] {
+  return findNonPreferredSpellings(text, 'australian');
 }
 
 function isSubwordBoundary(run: string, i: number): boolean {

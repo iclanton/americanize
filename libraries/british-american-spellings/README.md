@@ -2,7 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/%40americanize%2Fbritish-american-spellings.svg)](https://badge.fury.io/js/%40americanize%2Fbritish-american-spellings)
 
-A reviewable table of British → American word spellings (and its inverse), with small case-preserving lookup helpers that work in either direction.
+A reviewable table of British → American word spellings (and its inverse), plus Canadian and Australian variants, with small case-preserving lookup helpers that steer text toward any of the four dialects.
 
 It is the data layer behind [`eslint-plugin-dialect`](https://www.npmjs.com/package/eslint-plugin-dialect), but it has no ESLint dependency and is useful on its own.
 
@@ -73,9 +73,27 @@ Or go through the direction-agnostic core with an explicit target dialect:
 ```ts
 import { getPreferredSpelling, isNonPreferredSpelling } from '@americanize/british-american-spellings';
 
-getPreferredSpelling('colour', 'american'); // 'color'
-getPreferredSpelling('color', 'british'); //  'colour'
+getPreferredSpelling('colour', 'american'); //  'color'
+getPreferredSpelling('color', 'british'); //    'colour'
+getPreferredSpelling('organise', 'canadian'); // 'organize' (British spelling, American -ize ending)
+getPreferredSpelling('color', 'canadian'); //   'colour'
+getPreferredSpelling('organize', 'australian'); // 'organise'
 isNonPreferredSpelling('colour', 'american'); // true
+```
+
+### Canadian and Australian
+
+Two more dialects sit on top of the British/American pair:
+
+- **Canadian** is British spelling with American `-ize`/`-yze` endings (`colour` but `organize`, plus a few American forms such as `aluminum` and `airplane`).
+- **Australian** tracks British closely, with a small handful of exceptions (`inquire`, `licorice`, `program`).
+
+```ts
+import { getCanadianSpelling, getAustralianSpelling } from '@americanize/british-american-spellings';
+
+getCanadianSpelling('color'); //   'colour'  (keeps British -our)
+getCanadianSpelling('organise'); // 'organize' (takes American -ize)
+getAustralianSpelling('organize'); // 'organise' (follows British)
 ```
 
 ## Finding spellings in text
@@ -117,9 +135,11 @@ findAmericanSpellings('the program on disk', { includeAmbiguous: true }); // pro
 | `getPreferredSpelling(word, target, options?)` | Preferred spelling for `word`, or `undefined`. |
 | `isNonPreferredSpelling(word, target, options?)` | Whether `word` has a distinct preferred form. |
 | `findNonPreferredSpellings(text, target, options?)` | All offending words in `text`. |
-| `getAmericanSpelling` / `getBritishSpelling` | Shorthands for the two directions. |
+| `getAmericanSpelling` / `getBritishSpelling` | Shorthands for the American/British directions. |
+| `getCanadianSpelling` / `getAustralianSpelling` | Shorthands for the Canadian/Australian directions. |
 | `isBritishSpelling` / `isAmericanSpelling` | Shorthands for the two directions. |
-| `findBritishSpellings` / `findAmericanSpellings` | Shorthands for the two directions. |
+| `findBritishSpellings` / `findAmericanSpellings` | Shorthands for the American/British directions. |
+| `findCanadianSpellings` / `findAustralianSpellings` | Shorthands for the Canadian/Australian directions. |
 | `matchCase(source, replacement)` | Re-applies `source`'s casing onto `replacement`. |
 
-`target` is `'american' | 'british'` (`SpellingDialect`); `options` is `{ includeAmbiguous?: boolean }` (`ISpellingLookupOptions`).
+`target` is `'american' | 'british' | 'canadian' | 'australian'` (`SpellingDialect`); `options` is `{ includeAmbiguous?: boolean }` (`ISpellingLookupOptions`). The `includeAmbiguous` option applies to the British direction only.

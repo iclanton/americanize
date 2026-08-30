@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "eslint-plugin-dialect",
+      "comment": "Support the Canadian and Australian dialects: the `dialect` option now accepts `'canadian'` and `'australian'`, and `configs.canadian`/`configs.australian` presets are available.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "eslint-plugin-dialect",
+  "email": "iclanton@users.noreply.github.com"
+}

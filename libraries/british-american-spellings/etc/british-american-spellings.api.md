@@ -17,7 +17,13 @@ export const BRITISH_TO_AMERICAN: ReadonlyMap<string, string>;
 export function findAmericanSpellings(text: string, options?: ISpellingLookupOptions): ISpellingMatch[];
 
 // @public
+export function findAustralianSpellings(text: string): ISpellingMatch[];
+
+// @public
 export function findBritishSpellings(text: string): ISpellingMatch[];
+
+// @public
+export function findCanadianSpellings(text: string): ISpellingMatch[];
 
 // @public
 export function findNonPreferredSpellings(text: string, target: SpellingDialect, options?: ISpellingLookupOptions): ISpellingMatch[];
@@ -26,7 +32,13 @@ export function findNonPreferredSpellings(text: string, target: SpellingDialect,
 export function getAmericanSpelling(word: string): string | undefined;
 
 // @public
+export function getAustralianSpelling(word: string): string | undefined;
+
+// @public
 export function getBritishSpelling(word: string, options?: ISpellingLookupOptions): string | undefined;
+
+// @public
+export function getCanadianSpelling(word: string): string | undefined;
 
 // @public
 export function getPreferredSpelling(word: string, target: SpellingDialect, options?: ISpellingLookupOptions): string | undefined;
@@ -62,7 +74,7 @@ export interface ISpellingMatch extends ISpellingCorrection {
 export function matchCase(source: string, replacement: string): string;
 
 // @public
-export type SpellingDialect = 'american' | 'british';
+export type SpellingDialect = 'american' | 'british' | 'canadian' | 'australian';
 
 // (No @packageDocumentation comment for this package)
 

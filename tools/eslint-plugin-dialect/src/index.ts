@@ -18,6 +18,16 @@ const british: Linter.Config = {
   rules: { 'dialect/consistent-spelling': ['warn', { dialect: 'british' }] }
 };
 
+// Enforce Canadian spellings (British with American `-ize` endings).
+const canadian: Linter.Config = {
+  rules: { 'dialect/consistent-spelling': ['warn', { dialect: 'canadian' }] }
+};
+
+// Enforce Australian spellings (close to British).
+const australian: Linter.Config = {
+  rules: { 'dialect/consistent-spelling': ['warn', { dialect: 'australian' }] }
+};
+
 /**
  * The `eslint-plugin-dialect` plugin object.
  *
@@ -30,8 +40,10 @@ const british: Linter.Config = {
  * ];
  * ```
  *
- * or spread `dialect.configs.recommended` (American) or `dialect.configs.british` alongside a
- * `plugins` entry. Pass `{ dialect: 'british' }` to the rule directly for the same effect.
+ * or spread `dialect.configs.recommended` (American), `dialect.configs.british`,
+ * `dialect.configs.canadian` or `dialect.configs.australian` alongside a `plugins` entry. Pass
+ * `{ dialect: 'british' }` (or `'canadian'`/`'australian'`) to the rule directly for the same
+ * effect.
  */
 const plugin: ESLint.Plugin = {
   meta: {
@@ -39,7 +51,7 @@ const plugin: ESLint.Plugin = {
     version
   },
   rules,
-  configs: { recommended, british }
+  configs: { recommended, british, canadian, australian }
 };
 
 export = plugin;

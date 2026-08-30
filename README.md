@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/iclanton/americanize/actions/workflows/ci.yml/badge.svg)](https://github.com/iclanton/americanize/actions/workflows/ci.yml)
 
-A [Rush](https://rushjs.io/) monorepo of TypeScript projects, built with [Heft](https://heft.rushstack.io/), that keeps a codebase writing a single English dialect (American by default, or British).
+A [Rush](https://rushjs.io/) monorepo of TypeScript projects, built with [Heft](https://heft.rushstack.io/), that keeps a codebase writing a single English dialect (American by default, or British, Canadian or Australian).
 
 It ships two things:
 
-- **`@americanize/british-american-spellings`** - a reviewable table of British → American word spellings (and its inverse), plus small case-preserving lookup helpers that work in either direction.
+- **`@americanize/british-american-spellings`** - a reviewable table of British → American word spellings (and its inverse), plus Canadian and Australian variants, with small case-preserving lookup helpers that steer text toward any of the four dialects.
 - **`eslint-plugin-dialect`** - an ESLint rule that flags spellings of the wrong dialect in identifiers, comments and strings and steers them to the configured dialect. It was inspired by [`eslint-plugin-communist-spelling`](https://github.com/dprgarner/eslint-plugin-communist-spelling); both can enforce either dialect, but `eslint-plugin-dialect` also checks comments, strings and import file paths (and auto-fixes comments and strings), where that plugin focuses on identifiers.
 
 ## Layout
@@ -71,7 +71,7 @@ module.exports = [
       'dialect/consistent-spelling': [
         'error',
         {
-          dialect: 'american', //   or 'british' to enforce British spellings instead
+          dialect: 'american', //   or 'british' / 'canadian' / 'australian'
           identifiers: true, //     variable, function, class and member names
           comments: true, //        line and block comments
           strings: true, //         string literals and template strings
@@ -85,13 +85,15 @@ module.exports = [
 ];
 ```
 
-or spread a bundled config - `recommended` (American) or `british`:
+or spread a bundled config - `recommended` (American), `british`, `canadian` or `australian`:
 
 ```js
 const dialect = require('eslint-plugin-dialect');
 module.exports = [
   { plugins: { dialect }, ...dialect.configs.recommended } // American
-  // { plugins: { dialect }, ...dialect.configs.british }  // British
+  // { plugins: { dialect }, ...dialect.configs.british }     // British
+  // { plugins: { dialect }, ...dialect.configs.canadian }    // Canadian
+  // { plugins: { dialect }, ...dialect.configs.australian }  // Australian
 ];
 ```
 

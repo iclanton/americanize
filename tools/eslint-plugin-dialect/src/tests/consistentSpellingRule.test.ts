@@ -31,6 +31,12 @@ ruleTester.run('consistent-spelling', consistentSpellingRule, {
     // With the British dialect selected, British spellings are the valid ones.
     { code: 'const colour = 1;', options: [{ dialect: 'british' }] },
     { code: '// the colour', options: [{ dialect: 'british' }] },
+    // Canadian keeps British -our/-re but uses American -ize endings.
+    { code: 'const colour = 1;', options: [{ dialect: 'canadian' }] },
+    { code: '// initialize the colour', options: [{ dialect: 'canadian' }] },
+    // Australian is close to British, including -ise endings.
+    { code: 'const colour = 1;', options: [{ dialect: 'australian' }] },
+    { code: '// organise the colour', options: [{ dialect: 'australian' }] },
     // Ambiguous American spellings (program, disk, ...) are left alone under British by
     // default, since they are accepted in British English too.
     { code: '// the program writes to disk', options: [{ dialect: 'british' }] },
@@ -157,6 +163,38 @@ ruleTester.run('consistent-spelling', consistentSpellingRule, {
         {
           messageId: 'usePreferred',
           data: { from: 'disk', to: 'disc', preferred: 'British', offending: 'American' }
+        }
+      ]
+    },
+    // Canadian mixes both axes: a British -ise word and an American -or word are both fixed.
+    {
+      code: '// initialise the color',
+      options: [{ dialect: 'canadian' }],
+      output: '// initialize the colour',
+      errors: [
+        {
+          messageId: 'usePreferred',
+          data: { from: 'initialise', to: 'initialize', preferred: 'Canadian', offending: 'non-Canadian' }
+        },
+        {
+          messageId: 'usePreferred',
+          data: { from: 'color', to: 'colour', preferred: 'Canadian', offending: 'non-Canadian' }
+        }
+      ]
+    },
+    // Australian follows British, so an American -ize word and -or word are steered across.
+    {
+      code: '// organize the color',
+      options: [{ dialect: 'australian' }],
+      output: '// organise the colour',
+      errors: [
+        {
+          messageId: 'usePreferred',
+          data: { from: 'organize', to: 'organise', preferred: 'Australian', offending: 'non-Australian' }
+        },
+        {
+          messageId: 'usePreferred',
+          data: { from: 'color', to: 'colour', preferred: 'Australian', offending: 'non-Australian' }
         }
       ]
     },
