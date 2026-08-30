@@ -2,6 +2,34 @@
   "name": "eslint-plugin-dialect",
   "entries": [
     {
+      "version": "0.3.0",
+      "tag": "eslint-plugin-dialect_v0.3.0",
+      "date": "Sun, 30 Aug 2026 06:53:20 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Add repository, homepage and bugs links, an MIT license file, and license/author metadata."
+          },
+          {
+            "comment": "Correct the README comparison with eslint-plugin-communist-spelling: both plugins can enforce either dialect; the difference is scope."
+          },
+          {
+            "comment": "Skip allow-listed spellings inline while scanning rather than allocating a filtered copy of every match."
+          }
+        ],
+        "minor": [
+          {
+            "comment": "Expand the enforced spelling dictionary from ~1,379 to ~5,200 entries by updating the `@americanize/british-american-spellings` dependency (regenerated from the VarCon dataset), so the rule recognises many more British/American spelling differences."
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@americanize/british-american-spellings\" to `^0.2.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.2.0",
       "tag": "eslint-plugin-dialect_v0.2.0",
       "date": "Fri, 28 Aug 2026 09:31:15 GMT",
