@@ -4,10 +4,13 @@ An ESLint rule that enforces a single English dialect — **American** (default)
 **British** — in identifiers, comments and strings, and steers offending words to the
 configured dialect.
 
-It is the bidirectional cousin of
-[`eslint-plugin-communist-spelling`](https://github.com/dprgarner/eslint-plugin-communist-spelling),
-backed by the reviewable table in
+It was inspired by
+[`eslint-plugin-communist-spelling`](https://github.com/dprgarner/eslint-plugin-communist-spelling)
+and is backed by the reviewable table in
 [`@americanize/british-american-spellings`](https://www.npmjs.com/package/@americanize/british-american-spellings).
+Both plugins can enforce either dialect; the difference is scope — `eslint-plugin-dialect`
+also checks comments, strings and import file paths (and auto-fixes comments and strings),
+while `communist-spelling` focuses on identifiers (with finer identifier controls).
 
 ```ts
 const favouriteColour = 1; // 👉 Prefer the American spelling 'favorite' over the British 'favourite'.

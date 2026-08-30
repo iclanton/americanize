@@ -12,9 +12,12 @@ It ships two things:
   word spellings (and its inverse), plus small case-preserving lookup helpers that work in
   either direction.
 - **`eslint-plugin-dialect`** — an ESLint rule that flags spellings of the wrong dialect
-  in identifiers, comments and strings and steers them to the configured dialect. It is the
-  American counterpart to
-  [`eslint-plugin-communist-spelling`](https://github.com/dprgarner/eslint-plugin-communist-spelling).
+  in identifiers, comments and strings and steers them to the configured dialect. It was
+  inspired by
+  [`eslint-plugin-communist-spelling`](https://github.com/dprgarner/eslint-plugin-communist-spelling);
+  both can enforce either dialect, but `eslint-plugin-dialect` also checks comments, strings
+  and import file paths (and auto-fixes comments and strings), where that plugin focuses on
+  identifiers.
 
 ## Layout
 
