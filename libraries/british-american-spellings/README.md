@@ -12,6 +12,23 @@ but it has no ESLint dependency and is useful on its own.
 npm install @americanize/british-american-spellings
 ```
 
+The package has **no runtime dependencies** and ships both CommonJS and ES module builds, so
+it works in Node (CommonJS or ESM) and in the browser.
+
+### Browser / ESM usage
+
+The `import` condition resolves to an ES module (`lib-esm/`), so any bundler
+(Vite, webpack, esbuild, Rollup, Parcel) can tree-shake and bundle it for the browser:
+
+```ts
+import { getAmericanSpelling, findBritishSpellings } from '@americanize/british-american-spellings';
+```
+
+The spelling table is loaded via a JSON import, which every major bundler handles natively.
+A **bundler is required** for browser use: the raw ESM files are not meant to be loaded
+directly over the network via `<script type="module">` (a native, un-bundled JSON import
+would need import attributes). In Node, `require(...)` and `import` both work out of the box.
+
 ## The tables
 
 - **`BRITISH_TO_AMERICAN`** — `ReadonlyMap<string, string>` from a lower-cased British
