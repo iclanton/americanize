@@ -32,7 +32,8 @@
     "dist",
     "lib-commonjs",
     "lib-esm",
-    "lib-dts"
+    "lib-dts",
+    "NOTICE.md"
   ],
   "scripts": {
     "build": "heft build --clean",

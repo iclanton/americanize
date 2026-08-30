@@ -52,6 +52,17 @@ import { AMERICAN_TO_BRITISH } from '@americanize/british-american-spellings/lib
   also accepted in British English (`program`, `disk`, `analog`, `dialog` and their plurals —
   a *computer program*, a *hard disk* and a UI *dialog* are spelled that way on both sides).
 
+### Where the data comes from
+
+The table is generated from the **VarCon** dataset (Kevin Atkinson's SCOWL / English Speller
+Database) by `scripts/generateSpellings.mjs`, which pins the source by content hash and keeps
+only the common, verified entries. See [`NOTICE.md`](./NOTICE.md) for attribution. To
+regenerate after changing the generator (or bumping the pinned dataset):
+
+```sh
+node scripts/generateSpellings.mjs
+```
+
 ## Lookups
 
 Every lookup ignores case and re-applies the input word's casing to the result.

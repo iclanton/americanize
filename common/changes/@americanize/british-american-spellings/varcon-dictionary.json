@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "@americanize/british-american-spellings",
+      "comment": "Regenerate the spelling table from the VarCon dataset (Kevin Atkinson's SCOWL / English Speller Database), expanding it from ~1,379 to ~5,200 curated entries. Add scripts/generateSpellings.mjs (pins the source by content hash, filters to common/verified entries, applies the ambiguous-word overrides) and NOTICE.md attribution.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@americanize/british-american-spellings",
+  "email": "iclanton@users.noreply.github.com"
+}

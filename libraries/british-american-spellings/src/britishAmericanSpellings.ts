@@ -10,8 +10,8 @@ import britishAmericanSpellings from './britishAmericanSpellings.json';
  * listed explicitly rather than derived at runtime, so a lookup is a single map read and the
  * table is fully reviewable.
  *
- * This file is the source of truth for the `eslint-plugin-dialect` rule. When adding a
- * word, add every inflected form you expect code to actually use.
+ * The JSON is generated from the VarCon dataset by `scripts/generateSpellings.mjs` (see
+ * NOTICE.md for attribution) — edit that generator, not the JSON by hand.
  *
  * @public
  */
