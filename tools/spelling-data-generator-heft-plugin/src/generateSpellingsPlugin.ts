@@ -21,7 +21,11 @@ export interface ISpellingPair {
   readonly american: string;
 }
 
-const VARCON_URL: string = 'https://raw.githubusercontent.com/en-wl/wordlist/master/varcon/varcon.txt';
+// VarCon (the "Variant Conversion" table) ships in the SCOWLv1 line of the English Speller
+// Database. We pin the `v1` branch: the newer `v2` (ESDB) restructured the project and no
+// longer produces a varcon.txt, and the old `master` branch name has been retired. Pinned by
+// content hash below so a moved branch fails loudly rather than silently changing the data.
+const VARCON_URL: string = 'https://raw.githubusercontent.com/en-wl/wordlist/v1/varcon/varcon.txt';
 const VARCON_SHA256: string = '75af63da46ec12d7eb14b9f1ba8d3898d484dd6872755b73c921b215875a3629';
 
 // British spellings to drop from the table entirely, even if VarCon lists them.
