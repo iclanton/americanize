@@ -2,7 +2,7 @@
   "changes": [
     {
       "packageName": "@americanize/british-american-spellings",
-      "comment": "Allow deep-importing individual modules via a stable `lib/*` subpath, e.g. `import { AMERICAN_TO_BRITISH } from '@americanize/british-american-spellings/lib/britishAmericanSpellings'`.",
+      "comment": "Now ships CommonJS, ES module (browser-ready) and type-declaration builds, selected automatically through the package `exports` map, and lets you deep-import individual modules under a stable `lib/*` subpath, e.g. `import { AMERICAN_TO_BRITISH } from '@americanize/british-american-spellings/lib/britishAmericanSpellings'`.",
       "type": "minor"
     }
   ],

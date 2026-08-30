@@ -2,8 +2,8 @@
   "changes": [
     {
       "packageName": "@americanize/british-american-spellings",
-      "comment": "Ship an ES module build (lib-esm) alongside CommonJS with an `exports` map, so the library can be bundled for the browser. Add a `files` allowlist so published tarballs no longer include dev output (coverage, temp, src, .rush).",
-      "type": "minor"
+      "comment": "Slim the published package down to just its build output: a `files` allowlist keeps development files (coverage, temp, src, .rush) out of the tarball.",
+      "type": "patch"
     }
   ],
   "packageName": "@americanize/british-american-spellings",
