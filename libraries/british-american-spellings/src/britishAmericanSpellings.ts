@@ -12,6 +12,8 @@ import britishAmericanSpellings from './britishAmericanSpellings.json';
  *
  * This file is the source of truth for the `eslint-plugin-dialect` rule. When adding a
  * word, add every inflected form you expect code to actually use.
+ *
+ * @public
  */
 export const BRITISH_TO_AMERICAN: ReadonlyMap<string, string> = new Map(
   Object.entries(britishAmericanSpellings)
@@ -40,5 +42,7 @@ function invert(forward: ReadonlyMap<string, string>): ReadonlyMap<string, strin
  * Keys are the American spelling and values are the British spelling. Because a handful of
  * American words correspond to more than one British spelling in principle, only one British
  * spelling is offered per American word.
+ *
+ * @public
  */
 export const AMERICAN_TO_BRITISH: ReadonlyMap<string, string> = invert(BRITISH_TO_AMERICAN);

@@ -13,11 +13,11 @@
   "author": "Ian Clanton-Thuon",
   "main": "./lib-commonjs/index.js",
   "module": "./lib-esm/index.js",
-  "types": "./lib-dts/index.d.ts",
+  "types": "./dist/british-american-spellings.d.ts",
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./lib-dts/index.d.ts",
+      "types": "./dist/british-american-spellings.d.ts",
       "import": "./lib-esm/index.js",
       "require": "./lib-commonjs/index.js"
     },
@@ -29,6 +29,7 @@
     "./package.json": "./package.json"
   },
   "files": [
+    "dist",
     "lib-commonjs",
     "lib-esm",
     "lib-dts"

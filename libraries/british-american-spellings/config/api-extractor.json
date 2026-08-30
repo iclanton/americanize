@@ -1,0 +1,25 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+
+  // Declarations are emitted to lib-dts/ (see the rig tsconfig-base).
+  "mainEntryPointFilePath": "<projectFolder>/lib-dts/index.d.ts",
+
+  // Track the public API surface in a reviewable report checked in under etc/. The build
+  // updates it locally and fails a production/CI build if it drifts from what's committed.
+  "apiReport": {
+    "enabled": true
+  },
+
+  "docModel": {
+    "enabled": false
+  },
+
+  "dtsRollup": {
+    "enabled": true,
+    "betaTrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>.d.ts"
+  },
+
+  "tsdocMetadata": {
+    "enabled": false
+  }
+}
