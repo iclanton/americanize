@@ -65,7 +65,7 @@ importers:
   ../../tools/eslint-plugin-dialect:
     dependencies:
       '@americanize/british-american-spellings':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../libraries/british-american-spellings
       tslib:
         specifier: ~2.8.1
