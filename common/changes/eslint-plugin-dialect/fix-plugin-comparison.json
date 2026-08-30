@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "eslint-plugin-dialect",
+      "comment": "Correct the README comparison with eslint-plugin-communist-spelling: both plugins can enforce either dialect; the difference is scope.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "eslint-plugin-dialect",
+  "email": "iclanton@users.noreply.github.com"
+}
