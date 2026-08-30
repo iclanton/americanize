@@ -28,6 +28,12 @@ export interface ISpellingPair {
 const VARCON_URL: string = 'https://raw.githubusercontent.com/en-wl/wordlist/v1/varcon/varcon.txt';
 const VARCON_SHA256: string = '75af63da46ec12d7eb14b9f1ba8d3898d484dd6872755b73c921b215875a3629';
 
+// The VarCon README carries the third-party copyright / license text that must be reproduced
+// when redistributing the data. Pinned by content hash alongside the data, so an upstream
+// license change fails the build and forces us to review and refresh NOTICE.md.
+const VARCON_README_URL: string = 'https://raw.githubusercontent.com/en-wl/wordlist/v1/varcon/README';
+const VARCON_README_SHA256: string = '9aace7c213e4f3080bb1b47d343a52b00d4fe830534f3beca149dedf4b64c2e6';
+
 // British spellings to drop from the table entirely, even if VarCon lists them.
 const EXCLUDE: ReadonlySet<string> = new Set<string>();
 
@@ -35,6 +41,7 @@ const PLUGIN_NAME: string = 'generate-spelling-data';
 
 export interface IOptions {
   outputFilePath: string;
+  noticeFilePath: string;
 }
 
 interface IGenerateSpellingsPluginParameters {
@@ -63,15 +70,17 @@ export default class GenerateSpellingsPlugin implements IHeftTaskPlugin<IOptions
     const { hooks, logger, parameters } = session;
     hooks.run.tapPromise(PLUGIN_NAME, async () => {
       const { buildFolderPath } = heftConfiguration;
-      const { outputFilePath: rawOutputFilePath } = pluginOptions;
+      const { outputFilePath: rawOutputFilePath, noticeFilePath: rawNoticeFilePath } = pluginOptions;
       const outputFilePath: string = path.resolve(buildFolderPath, rawOutputFilePath);
+      const noticeFilePath: string = path.resolve(buildFolderPath, rawNoticeFilePath);
       const cliParameters: IGenerateSpellingsPluginParameters = {
         varconFilePath: parameters.getStringParameter('--varcon-file').value,
         maxLevel: parameters.getIntegerParameter('--max-level').value!
       };
 
-      const [varconText, existing] = await Promise.all([
+      const [varconText, readmeText, existing] = await Promise.all([
         loadVarconAsync(cliParameters),
+        fetchPinnedTextAsync(VARCON_README_URL, VARCON_README_SHA256),
         JsonFile.loadAsync(outputFilePath)
       ]);
       const table: Record<string, string> = curate(extractPairs(varconText, cliParameters));
@@ -91,13 +100,16 @@ export default class GenerateSpellingsPlugin implements IHeftTaskPlugin<IOptions
 
       if (!hasChanged) {
         logger.terminal.writeLine(`No changes to ${outputFilePath}`);
-        return;
       } else {
         await JsonFile.saveAsync(table, outputFilePath, { ensureFolderExists: true });
         logger.emitWarning(
           new Error(`The output file ${outputFilePath} has changed. Please commit the updated file.`)
         );
       }
+
+      // Keep the third-party license notice in sync with the exact upstream text we pulled.
+      const noticeContent: string = composeNotice(extractLicense(readmeText));
+      await writeTextIfChangedAsync(noticeFilePath, noticeContent, logger);
     });
   }
 }
@@ -108,23 +120,85 @@ export default class GenerateSpellingsPlugin implements IHeftTaskPlugin<IOptions
  */
 async function loadVarconAsync(cliParameters: IGenerateSpellingsPluginParameters): Promise<string> {
   const { varconFilePath } = cliParameters;
-  let bytes: Buffer;
   if (varconFilePath) {
-    bytes = await FileSystem.readFileToBufferAsync(varconFilePath);
-  } else {
-    const response: Response = await fetch(VARCON_URL);
-    bytes = Buffer.from(await response.arrayBuffer());
+    const bytes: Buffer = await FileSystem.readFileToBufferAsync(varconFilePath);
+    return verifyHash(bytes, VARCON_SHA256, varconFilePath).toString('utf8');
   }
 
+  return fetchPinnedTextAsync(VARCON_URL, VARCON_SHA256);
+}
+
+/** Fetches a URL and verifies it against the pinned content hash, returning its UTF-8 text. */
+async function fetchPinnedTextAsync(url: string, expectedSha256: string): Promise<string> {
+  const response: Response = await fetch(url);
+  const bytes: Buffer = Buffer.from(await response.arrayBuffer());
+  return verifyHash(bytes, expectedSha256, url).toString('utf8');
+}
+
+function verifyHash(bytes: Buffer, expectedSha256: string, source: string): Buffer {
   const actual: string = createHash('sha256').update(bytes).digest('hex');
-  if (actual !== VARCON_SHA256) {
+  if (actual !== expectedSha256) {
     throw new Error(
-      `VarCon content hash mismatch.\n  expected ${VARCON_SHA256}\n  actual   ${actual}\n` +
-        'The upstream data changed. Review the diff, then update VARCON_SHA256.'
+      `Content hash mismatch for ${source}.\n  expected ${expectedSha256}\n  actual   ${actual}\n` +
+        'The upstream source changed. Review the diff, then update the pinned hash.'
     );
   }
 
-  return bytes.toString('utf8');
+  return bytes;
+}
+
+// The VarCon README ends with a "Copyright" section holding the full license text. Return
+// everything after that heading, verbatim, so the notice reproduces the upstream wording.
+function extractLicense(readmeText: string): string {
+  const heading: RegExpMatchArray | null = readmeText.match(/\nCopyright\n=+\n+/);
+  if (heading?.index === undefined) {
+    throw new Error('Could not find the Copyright section in the VarCon README.');
+  }
+
+  return readmeText.slice(heading.index + heading[0].length).trim();
+}
+
+// Renders NOTICE.md from a fixed preamble plus the verbatim upstream license.
+function composeNotice(license: string): string {
+  return [
+    '# Third-party notices',
+    '',
+    '## VarCon (Variant Conversion Info)',
+    '',
+    "The British/American spelling table in `src/britishAmericanSpellings.json` is derived from the **VarCon** dataset, part of Kevin Atkinson's SCOWL / English Speller Database (<http://wordlist.aspell.net/> and <https://github.com/en-wl/wordlist>). It is regenerated by the `@americanize/spelling-data-generator-heft-plugin` Heft plugin, which also regenerates this notice.",
+    '',
+    'VarCon is distributed under the following permissive terms:',
+    '',
+    '```',
+    license,
+    '```',
+    ''
+  ].join('\n');
+}
+
+// Writes `content` to `filePath`, warning (rather than silently rewriting) when it drifts from
+// what is committed, so the change is noticed and committed.
+async function writeTextIfChangedAsync(
+  filePath: string,
+  content: string,
+  logger: IHeftTaskSession['logger']
+): Promise<void> {
+  let existing: string | undefined;
+  try {
+    existing = await FileSystem.readFileAsync(filePath);
+  } catch (error: unknown) {
+    if (!FileSystem.isNotExistError(error as Error)) {
+      throw error;
+    }
+  }
+
+  if (existing === content) {
+    logger.terminal.writeLine(`No changes to ${filePath}`);
+    return;
+  }
+
+  await FileSystem.writeFileAsync(filePath, content, { ensureFolderExists: true });
+  logger.emitWarning(new Error(`The output file ${filePath} has changed. Please commit the updated file.`));
 }
 
 /**

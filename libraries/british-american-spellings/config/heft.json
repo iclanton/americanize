@@ -9,7 +9,8 @@
             "pluginPackage": "@americanize/spelling-data-generator-heft-plugin",
             "pluginName": "generate-spelling-data",
             "options": {
-              "outputFilePath": "src/britishAmericanSpellings.json"
+              "outputFilePath": "src/britishAmericanSpellings.json",
+              "noticeFilePath": "NOTICE.md"
             }
           }
         }
