@@ -29,6 +29,17 @@ A **bundler is required** for browser use: the raw ESM files are not meant to be
 directly over the network via `<script type="module">` (a native, un-bundled JSON import
 would need import attributes). In Node, `require(...)` and `import` both work out of the box.
 
+### Package layout
+
+The build is split by output kind — `lib-commonjs/` (CommonJS), `lib-esm/` (ES modules) and
+`lib-dts/` (type declarations) — wired together through the `exports` map, so the right one
+is picked automatically for `require`, `import` and type resolution. Individual modules can
+be deep-imported under a stable `lib/*` path, which routes to the correct variant folder:
+
+```ts
+import { AMERICAN_TO_BRITISH } from '@americanize/british-american-spellings/lib/britishAmericanSpellings';
+```
+
 ## The tables
 
 - **`BRITISH_TO_AMERICAN`** — `ReadonlyMap<string, string>` from a lower-cased British

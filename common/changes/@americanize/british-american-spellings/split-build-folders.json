@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "@americanize/british-american-spellings",
+      "comment": "Split the build output by kind: CommonJS to lib-commonjs, ES modules to lib-esm, and type declarations to lib-dts. Expose them through the exports map, and allow deep-importing individual modules under a stable `lib/*` subpath that routes to the correct variant folder.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@americanize/british-american-spellings",
+  "email": "iclanton@users.noreply.github.com"
+}
