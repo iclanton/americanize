@@ -1,0 +1,19 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/heft/v0/heft.schema.json",
+  "extends": "@americanize/local-build-rig/profiles/node/config/heft.json",
+  "phasesByName": {
+    "generate-dictionary": {
+      "tasksByName": {
+        "generate-spelling-data": {
+          "taskPlugin": {
+            "pluginPackage": "@americanize/spelling-data-generator-heft-plugin",
+            "pluginName": "generate-spelling-data",
+            "options": {
+              "outputFilePath": "src/britishAmericanSpellings.json"
+            }
+          }
+        }
+      }
+    }
+  }
+}

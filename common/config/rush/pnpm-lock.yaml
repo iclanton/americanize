@@ -22,6 +22,9 @@ importers:
       '@americanize/local-build-rig':
         specifier: workspace:*
         version: link:../../tools/local-build-rig
+      '@americanize/spelling-data-generator-heft-plugin':
+        specifier: workspace:*
+        version: link:../../tools/spelling-data-generator-heft-plugin
       '@rushstack/heft':
         specifier: 1.2.25
         version: 1.2.25(@types/node@24.13.3)
@@ -111,7 +114,7 @@ importers:
         specifier: ~5.8.3
         version: 5.8.3
 
-  ../../tools/spelling-data-generator:
+  ../../tools/spelling-data-generator-heft-plugin:
     dependencies:
       '@rushstack/node-core-library':
         specifier: 5.23.3

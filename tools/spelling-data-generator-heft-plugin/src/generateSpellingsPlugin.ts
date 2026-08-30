@@ -1,8 +1,19 @@
 /*! Copyright (c) Ian Clanton-Thuon. All rights reserved. */
 
 import { createHash } from 'node:crypto';
+import path from 'node:path';
 
-import { FileSystem } from '@rushstack/node-core-library';
+import type { HeftConfiguration, IHeftTaskPlugin, IHeftTaskSession } from '@rushstack/heft';
+import { FileSystem, JsonFile } from '@rushstack/node-core-library';
+
+// Curation applied on top of the raw VarCon extraction.
+//
+// VarCon marks a word that both dialects accept with A *and* B on the same token, so the
+// extractor naturally drops it (British === American). That correctly excludes `advertise`,
+// `exercise`, and the computing senses of `disk`/`dialog`. We add back the four "ambiguous"
+// pairs the library still wants in the table so that its `includeAmbiguous` option has
+// something to enforce; the rule leaves them alone by default.
+import OVERRIDES from './overrides.json';
 
 /** A British spelling and the American spelling it maps to, both lower-cased. */
 export interface ISpellingPair {
@@ -13,45 +24,89 @@ export interface ISpellingPair {
 const VARCON_URL: string = 'https://raw.githubusercontent.com/en-wl/wordlist/master/varcon/varcon.txt';
 const VARCON_SHA256: string = '75af63da46ec12d7eb14b9f1ba8d3898d484dd6872755b73c921b215875a3629';
 
-// VarCon tags each cluster with a commonness "level" (lower = more common / more strongly
-// verified). Levels of 80+ are dominated by algorithmically-generated inflections of rare
-// words (`unplagiariseddest`, `savourousest`), so we keep entries at or below this threshold.
-// The everyday British/American differences all sit at level 10-60.
-const MAX_LEVEL: number = 70;
-
-// Curation applied on top of the raw VarCon extraction.
-//
-// VarCon marks a word that both dialects accept with A *and* B on the same token, so the
-// extractor naturally drops it (British === American). That correctly excludes `advertise`,
-// `exercise`, and the computing senses of `disk`/`dialog`. We add back the four "ambiguous"
-// pairs the library still wants in the table so that its `includeAmbiguous` option has
-// something to enforce; the rule leaves them alone by default.
-const OVERRIDES: Readonly<Record<string, string>> = {
-  programme: 'program',
-  programmes: 'programs',
-  disc: 'disk',
-  discs: 'disks',
-  dialogue: 'dialog',
-  dialogues: 'dialogs',
-  analogue: 'analog',
-  analogues: 'analogs'
-};
-
 // British spellings to drop from the table entirely, even if VarCon lists them.
 const EXCLUDE: ReadonlySet<string> = new Set<string>();
 
-// The committed data file, relative to this compiled module.
-const OUTPUT_PATH: string = `${__dirname}/../../../libraries/british-american-spellings/src/britishAmericanSpellings.json`;
+const PLUGIN_NAME: string = 'generate-spelling-data';
+
+export interface IOptions {
+  outputFilePath: string;
+}
+
+interface IGenerateSpellingsPluginParameters {
+  /**
+   * Path to a local VarCon file. If not provided, the dataset is fetched from its upstream URL.
+   */
+  varconFilePath: string | undefined;
+
+  /**
+   * VarCon tags each cluster with a commonness "level" (lower = more common / more strongly
+   * verified). Levels of 80+ are dominated by algorithmically-generated inflections of rare
+   * words (`unplagiariseddest`, `savourousest`), so we keep entries at or below this threshold.
+   * The everyday British/American differences all sit at level 10-60.
+   */
+  maxLevel: number;
+}
+
+export default class GenerateSpellingsPlugin implements IHeftTaskPlugin<IOptions> {
+  public readonly pluginName: string = PLUGIN_NAME;
+
+  public apply(
+    session: IHeftTaskSession,
+    heftConfiguration: HeftConfiguration,
+    pluginOptions: IOptions
+  ): void {
+    const { hooks, logger, parameters } = session;
+    hooks.run.tapPromise(PLUGIN_NAME, async () => {
+      const { buildFolderPath } = heftConfiguration;
+      const { outputFilePath: rawOutputFilePath } = pluginOptions;
+      const outputFilePath: string = path.resolve(buildFolderPath, rawOutputFilePath);
+      const cliParameters: IGenerateSpellingsPluginParameters = {
+        varconFilePath: parameters.getStringParameter('--varcon-file').value,
+        maxLevel: parameters.getIntegerParameter('--max-level').value!
+      };
+
+      const [varconText, existing] = await Promise.all([
+        loadVarconAsync(cliParameters),
+        JsonFile.loadAsync(outputFilePath)
+      ]);
+      const table: Record<string, string> = curate(extractPairs(varconText, cliParameters));
+
+      const existingMap: Map<string, string> = new Map(Object.entries(existing));
+      const newMap: Map<string, string> = new Map(Object.entries(table));
+
+      let hasChanged: boolean = existingMap.size !== newMap.size;
+      if (!hasChanged) {
+        for (const [british, american] of newMap) {
+          if (existingMap.get(british) !== american) {
+            hasChanged = true;
+            break;
+          }
+        }
+      }
+
+      if (!hasChanged) {
+        logger.terminal.writeLine(`No changes to ${outputFilePath}`);
+        return;
+      } else {
+        await JsonFile.saveAsync(table, outputFilePath, { ensureFolderExists: true });
+        logger.emitWarning(
+          new Error(`The output file ${outputFilePath} has changed. Please commit the updated file.`)
+        );
+      }
+    });
+  }
+}
 
 /**
  * Loads the VarCon source, verifying it against the pinned content hash. Set VARCON_FILE to a
  * local path to generate offline; otherwise the dataset is fetched from its upstream URL.
  */
-async function loadVarconAsync(): Promise<string> {
-  const { VARCON_FILE } = process.env;
+async function loadVarconAsync(cliParameters: IGenerateSpellingsPluginParameters): Promise<string> {
+  const { varconFilePath } = cliParameters;
   let bytes: Buffer;
-  if (VARCON_FILE !== undefined) {
-    bytes = await FileSystem.readFileToBufferAsync(VARCON_FILE);
+  if (varconFilePath) {
+    bytes = await FileSystem.readFileToBufferAsync(varconFilePath);
   } else {
     const response: Response = await fetch(VARCON_URL);
     bytes = Buffer.from(await response.arrayBuffer());
@@ -75,7 +130,11 @@ async function loadVarconAsync(): Promise<string> {
  * `Bv`, `Z`, numbers, ...) are not primary and are ignored, so a word both dialects accept
  * (tagged `A B` on the same token) yields British === American and is skipped.
  */
-export function extractPairs(varconText: string): Record<string, string> {
+export function extractPairs(
+  varconText: string,
+  cliParameters: IGenerateSpellingsPluginParameters
+): Record<string, string> {
+  const { maxLevel } = cliParameters;
   const pairs: Record<string, string> = {};
   let level: number = Number.POSITIVE_INFINITY;
 
@@ -86,7 +145,7 @@ export function extractPairs(varconText: string): Record<string, string> {
       level = match ? Number(match[1]) : Number.POSITIVE_INFINITY;
       continue;
     }
-    if (line.length === 0 || level > MAX_LEVEL) {
+    if (line.length === 0 || level > maxLevel) {
       continue;
     }
 
@@ -150,18 +209,3 @@ export function curate(pairs: Record<string, string>): Record<string, string> {
 
   return sorted;
 }
-
-async function mainAsync(): Promise<void> {
-  const varconText: string = await loadVarconAsync();
-  const table: Record<string, string> = curate(extractPairs(varconText));
-
-  await FileSystem.writeFileAsync(OUTPUT_PATH, `${JSON.stringify(table, undefined, 2)}\n`, {
-    ensureFolderExists: true
-  });
-  console.info(`Wrote ${Object.keys(table).length} entries to ${OUTPUT_PATH}`);
-}
-
-mainAsync().catch((error: unknown) => {
-  process.stderr.write(`${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`);
-  process.exitCode = 1;
-});

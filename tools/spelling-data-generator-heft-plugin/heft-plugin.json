@@ -1,0 +1,26 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/heft/v0/heft-plugin.schema.json",
+
+  "taskPlugins": [
+    {
+      "pluginName": "generate-spelling-data",
+      "entryPoint": "./lib-commonjs/generateSpellingsPlugin.js",
+      "optionsSchema": "./lib-commonjs/options.schema.json",
+      "parameters": [
+        {
+          "parameterKind": "string",
+          "longName": "--varcon-file",
+          "argumentName": "PATH",
+          "description": "Path to the local VarCon file to use instead of fetching from the upstream URL."
+        },
+        {
+          "parameterKind": "integer",
+          "longName": "--max-level",
+          "argumentName": "LEVEL",
+          "description": "Maximum VarCon level to include in the extraction.",
+          "defaultValue": 70
+        }
+      ]
+    }
+  ]
+}

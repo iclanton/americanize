@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "required": ["outputFilePath"],
+  "additionalProperties": false,
+  "properties": {
+    "outputFilePath": {
+      "type": "string",
+      "description": "The path to the output file where the generated spelling data will be saved."
+    }
+  }
+}
