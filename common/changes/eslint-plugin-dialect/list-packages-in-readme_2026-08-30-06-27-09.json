@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "comment": "",
+      "type": "none",
+      "packageName": "eslint-plugin-dialect"
+    }
+  ],
+  "packageName": "eslint-plugin-dialect",
+  "email": "iclanton@users.noreply.github.com"
+}
