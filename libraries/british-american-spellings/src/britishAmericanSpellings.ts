@@ -10,8 +10,8 @@ import britishAmericanSpellings from './britishAmericanSpellings.json';
  * listed explicitly rather than derived at runtime, so a lookup is a single map read and the
  * table is fully reviewable.
  *
- * The JSON is generated from the VarCon dataset by `scripts/generateSpellings.mjs` (see
- * NOTICE.md for attribution) — edit that generator, not the JSON by hand.
+ * The JSON is generated from the VarCon dataset by the `@americanize/spelling-data-generator`
+ * tool (see NOTICE.md for attribution) — edit that generator, not the JSON by hand.
  *
  * @public
  */

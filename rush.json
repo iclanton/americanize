@@ -58,6 +58,12 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@americanize/spelling-data-generator",
+      "projectFolder": "tools/spelling-data-generator",
+      "reviewCategory": "tools",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@americanize/british-american-spellings",
       "projectFolder": "libraries/british-american-spellings",
       "reviewCategory": "libraries",

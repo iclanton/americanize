@@ -55,12 +55,12 @@ import { AMERICAN_TO_BRITISH } from '@americanize/british-american-spellings/lib
 ### Where the data comes from
 
 The table is generated from the **VarCon** dataset (Kevin Atkinson's SCOWL / English Speller
-Database) by `scripts/generateSpellings.mjs`, which pins the source by content hash and keeps
-only the common, verified entries. See [`NOTICE.md`](./NOTICE.md) for attribution. To
-regenerate after changing the generator (or bumping the pinned dataset):
+Database) by the `@americanize/spelling-data-generator` tool, which pins the source by content
+hash and keeps only the common, verified entries. See [`NOTICE.md`](./NOTICE.md) for
+attribution. To regenerate after changing the generator (or bumping the pinned dataset):
 
 ```sh
-node scripts/generateSpellings.mjs
+cd tools/spelling-data-generator && rushx generate
 ```
 
 ## Lookups
