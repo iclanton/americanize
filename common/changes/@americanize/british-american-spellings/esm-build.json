@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "@americanize/british-american-spellings",
+      "comment": "Ship an ES module build (lib-esm) alongside CommonJS with an `exports` map, so the library can be bundled for the browser. Add a `files` allowlist so published tarballs no longer include dev output (coverage, temp, src, .rush).",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@americanize/british-american-spellings",
+  "email": "iclanton@users.noreply.github.com"
+}

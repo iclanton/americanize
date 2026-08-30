@@ -12,7 +12,21 @@
   "license": "MIT",
   "author": "Ian Clanton-Thuon",
   "main": "./lib/index.js",
+  "module": "./lib-esm/index.js",
   "types": "./lib/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib-esm/index.js",
+      "require": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "lib-esm"
+  ],
   "scripts": {
     "build": "heft build --clean",
     "test": "heft test --clean",
