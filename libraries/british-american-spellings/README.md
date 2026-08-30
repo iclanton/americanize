@@ -1,5 +1,7 @@
 # @americanize/british-american-spellings
 
+[![npm version](https://badge.fury.io/js/%40americanize%2Fbritish-american-spellings.svg)](https://badge.fury.io/js/%40americanize%2Fbritish-american-spellings)
+
 A reviewable table of British → American word spellings (and its inverse), with small case-preserving lookup helpers that work in either direction.
 
 It is the data layer behind [`eslint-plugin-dialect`](https://www.npmjs.com/package/eslint-plugin-dialect), but it has no ESLint dependency and is useful on its own.
