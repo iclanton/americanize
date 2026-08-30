@@ -1,9 +1,9 @@
 {
   "extends": "@americanize/local-build-rig/profiles/node/config/typescript.json",
 
-  // Emit an ESM build to lib-esm/ alongside the default CommonJS lib/, so the library can be
-  // consumed by browser bundlers. staticAssetsToCopy (inherited) copies the data JSON into
-  // every emit folder.
+  // Emit an ESM build to lib-esm/ alongside the CommonJS build (lib-commonjs/, from the rig),
+  // so the library can be consumed by browser bundlers. staticAssetsToCopy (inherited) copies
+  // the data JSON into every emit folder.
   "additionalModuleKindsToEmit": [
     {
       "moduleKind": "esnext",

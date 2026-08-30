@@ -11,21 +11,27 @@
   "bugs": "https://github.com/iclanton/americanize/issues",
   "license": "MIT",
   "author": "Ian Clanton-Thuon",
-  "main": "./lib/index.js",
+  "main": "./lib-commonjs/index.js",
   "module": "./lib-esm/index.js",
-  "types": "./lib/index.d.ts",
+  "types": "./lib-dts/index.d.ts",
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./lib/index.d.ts",
+      "types": "./lib-dts/index.d.ts",
       "import": "./lib-esm/index.js",
-      "require": "./lib/index.js"
+      "require": "./lib-commonjs/index.js"
+    },
+    "./lib/*": {
+      "types": "./lib-dts/*.d.ts",
+      "import": "./lib-esm/*.js",
+      "require": "./lib-commonjs/*.js"
     },
     "./package.json": "./package.json"
   },
   "files": [
-    "lib",
-    "lib-esm"
+    "lib-commonjs",
+    "lib-esm",
+    "lib-dts"
   ],
   "scripts": {
     "build": "heft build --clean",
