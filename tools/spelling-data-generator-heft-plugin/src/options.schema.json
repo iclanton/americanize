@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "required": ["outputFilePath", "noticeFilePath"],
+  "additionalProperties": false,
+  "properties": {
+    "outputFilePath": {
+      "type": "string",
+      "description": "The path to the output file where the generated spelling data will be saved."
+    },
+    "noticeFilePath": {
+      "type": "string",
+      "description": "The path to the third-party license notice (NOTICE.md) to regenerate from the upstream VarCon license."
+    }
+  }
+}

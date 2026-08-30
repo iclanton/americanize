@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "eslint-plugin-dialect",
+      "comment": "Expand the enforced spelling dictionary from ~1,379 to ~5,200 entries by updating the `@americanize/british-american-spellings` dependency (regenerated from the VarCon dataset), so the rule recognises many more British/American spelling differences.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "eslint-plugin-dialect",
+  "email": "iclanton@users.noreply.github.com"
+}

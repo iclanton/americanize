@@ -1,0 +1,21 @@
+{
+  "name": "@americanize/spelling-data-generator-heft-plugin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline tool that regenerates the British/American spelling table from the VarCon dataset.",
+  "scripts": {
+    "build": "heft build --clean",
+    "_phase:build": "heft run --only build -- --clean"
+  },
+  "dependencies": {
+    "@rushstack/node-core-library": "5.23.3",
+    "tslib": "~2.8.1"
+  },
+  "devDependencies": {
+    "@americanize/eslint-config": "workspace:*",
+    "@americanize/local-build-rig": "workspace:*",
+    "@rushstack/heft": "1.2.25",
+    "@types/node": "~24.13.2",
+    "eslint": "~9.37.0"
+  }
+}

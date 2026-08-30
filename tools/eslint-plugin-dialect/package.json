@@ -43,7 +43,7 @@
     "_phase:test": "heft run --only test -- --clean"
   },
   "dependencies": {
-    "@americanize/british-american-spellings": "workspace:*",
+    "@americanize/british-american-spellings": "workspace:^",
     "tslib": "~2.8.1"
   },
   "devDependencies": {

@@ -2,22 +2,12 @@
 
 [![CI](https://github.com/iclanton/americanize/actions/workflows/ci.yml/badge.svg)](https://github.com/iclanton/americanize/actions/workflows/ci.yml)
 
-A [Rush](https://rushjs.io/) monorepo of TypeScript projects, built with
-[Heft](https://heft.rushstack.io/), that keeps a codebase writing a single English dialect —
-American by default, or British.
+A [Rush](https://rushjs.io/) monorepo of TypeScript projects, built with [Heft](https://heft.rushstack.io/), that keeps a codebase writing a single English dialect (American by default, or British).
 
 It ships two things:
 
-- **`@americanize/british-american-spellings`** — a reviewable table of British → American
-  word spellings (and its inverse), plus small case-preserving lookup helpers that work in
-  either direction.
-- **`eslint-plugin-dialect`** — an ESLint rule that flags spellings of the wrong dialect
-  in identifiers, comments and strings and steers them to the configured dialect. It was
-  inspired by
-  [`eslint-plugin-communist-spelling`](https://github.com/dprgarner/eslint-plugin-communist-spelling);
-  both can enforce either dialect, but `eslint-plugin-dialect` also checks comments, strings
-  and import file paths (and auto-fixes comments and strings), where that plugin focuses on
-  identifiers.
+- **`@americanize/british-american-spellings`** - a reviewable table of British → American word spellings (and its inverse), plus small case-preserving lookup helpers that work in either direction.
+- **`eslint-plugin-dialect`** - an ESLint rule that flags spellings of the wrong dialect in identifiers, comments and strings and steers them to the configured dialect. It was inspired by [`eslint-plugin-communist-spelling`](https://github.com/dprgarner/eslint-plugin-communist-spelling); both can enforce either dialect, but `eslint-plugin-dialect` also checks comments, strings and import file paths (and auto-fixes comments and strings), where that plugin focuses on identifiers.
 
 ## Layout
 
@@ -43,12 +33,7 @@ node common/scripts/install-run-rush.js test
 
 ## The spelling table
 
-`BRITISH_TO_AMERICAN` maps a lower-cased British spelling to its American form. Inflected
-forms (`colour`/`colours`/`coloured`, `organise`/`organised`/`organisation`, …) are listed
-explicitly, so a lookup is a single map read and the whole table is reviewable. The `-ise`
-words that stay `-ise` in American English (`advertise`, `exercise`, `surprise`,
-`compromise`, …) are deliberately absent. `AMERICAN_TO_BRITISH` is the inverse, for going the
-other way.
+`BRITISH_TO_AMERICAN` maps a lower-cased British spelling to its American form. Inflected forms (`colour`/`colours`/`coloured`, `organise`/`organised`/`organisation`, …) are listed explicitly, so a lookup is a single map read and the whole table is reviewable. The `-ise` words that stay `-ise` in American English (`advertise`, `exercise`, `surprise`, `compromise`, …) are deliberately absent. `AMERICAN_TO_BRITISH` is the inverse, for going the other way.
 
 ```ts
 import {
@@ -68,10 +53,7 @@ findBritishSpellings('favouriteColour');
 //  { from: 'colour',    to: 'Color',    word: 'Colour',    index: 9 }]
 ```
 
-`findBritishSpellings` / `findAmericanSpellings` (and the direction-agnostic
-`findNonPreferredSpellings`) split `camelCase`, `snake_case`, `kebab-case`, `SCREAMING_CASE`,
-acronym boundaries and plain prose, which is what lets one rule cover identifiers, comments
-and strings alike.
+`findBritishSpellings` / `findAmericanSpellings` (and the direction-agnostic `findNonPreferredSpellings`) split `camelCase`, `snake_case`, `kebab-case`, `SCREAMING_CASE`, acronym boundaries and plain prose, which is what lets one rule cover identifiers, comments and strings alike.
 
 ## The ESLint rule
 
@@ -102,7 +84,7 @@ module.exports = [
 ];
 ```
 
-or spread a bundled config — `recommended` (American) or `british`:
+or spread a bundled config - `recommended` (American) or `british`:
 
 ```js
 const dialect = require('eslint-plugin-dialect');
@@ -115,18 +97,9 @@ module.exports = [
 ### What gets fixed
 
 - **Comments** and **strings** are **auto-fixed** (`--fix`), preserving the original casing.
-- **Identifiers** and **import file paths** are **reported only**. A rename the rule cannot
-  follow — to every reference, or to the file on disk — would break the build, so it flags
-  the name and leaves the rename to you. For identifiers, only binding positions
-  (declarations, parameters, and members you define) are checked. For imports, only the
-  in-package file path is checked — the **package name is never checked** (so `import 'axe-core'`
-  is never flagged).
+- **Identifiers** and **import file paths** are **reported only**. A rename the rule cannot follow - to every reference, or to the file on disk - would break the build, so it flags the name and leaves the rename to you. For identifiers, only binding positions (declarations, parameters, and members you define) are checked. For imports, only the in-package file path is checked - the **package name is never checked** (so `import 'axe-core'` is never flagged).
 
 ### Ambiguous spellings (British direction)
 
-Some American spellings are accepted in British English too, especially in computing —
-`program`, `disk`, `analog`, `dialog` (a *computer program*, a *hard disk* and a UI *dialog*
-are spelled that way on both sides of the Atlantic). When enforcing British, these are left
-alone by default. Set `includeAmbiguous: true` to steer them to `programme`, `disc`,
-`analogue` and `dialogue` as well. The set is exported as `AMBIGUOUS_AMERICAN_SPELLINGS`.
+Some American spellings are accepted in British English too, especially in computing - `program`, `disk`, `analog`, `dialog` (a *computer program*, a *hard disk* and a UI *dialog* are spelled that way on both sides of the Atlantic). When enforcing British, these are left alone by default. Set `includeAmbiguous: true` to steer them to `programme`, `disc`, `analogue` and `dialogue` as well. The set is exported as `AMBIGUOUS_AMERICAN_SPELLINGS`.
 

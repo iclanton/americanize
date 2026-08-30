@@ -32,7 +32,8 @@
     "dist",
     "lib-commonjs",
     "lib-esm",
-    "lib-dts"
+    "lib-dts",
+    "NOTICE.md"
   ],
   "scripts": {
     "build": "heft build --clean",
@@ -47,6 +48,7 @@
     "@americanize/eslint-config": "workspace:*",
     "@americanize/local-build-rig": "workspace:*",
     "@rushstack/heft": "1.2.25",
-    "eslint": "~9.37.0"
+    "eslint": "~9.37.0",
+    "@americanize/spelling-data-generator-heft-plugin": "workspace:*"
   }
 }

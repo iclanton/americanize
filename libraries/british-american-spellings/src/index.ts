@@ -10,8 +10,8 @@ import { AMERICAN_TO_BRITISH, BRITISH_TO_AMERICAN } from './britishAmericanSpell
 export type SpellingDialect = 'american' | 'british';
 
 /**
- * American spellings that are also widely accepted in British English — chiefly because the
- * American form is the usual one in computing and science — so enforcing a British-only
+ * American spellings that are also widely accepted in British English - chiefly because the
+ * American form is the usual one in computing and science - so enforcing a British-only
  * alternative on them tends to be wrong. These are skipped when enforcing British unless
  * {@link ISpellingLookupOptions.includeAmbiguous} is set.
  *
@@ -81,8 +81,8 @@ function isExcludedAsAmbiguous(
 /**
  * Re-applies the casing pattern of `source` onto `replacement`.
  *
- * Handles the three cases that occur in real identifiers and prose — all-lower (`colour`),
- * capitalised (`Colour`) and all-upper (`COLOUR`) — and otherwise falls back to the
+ * Handles the three cases that occur in real identifiers and prose - all-lower (`colour`),
+ * capitalised (`Colour`) and all-upper (`COLOUR`) - and otherwise falls back to the
  * replacement's own (lower) casing. A mixed-case source such as `cOlOuR` is not something a
  * correction can sensibly preserve, so it is treated as lower-case.
  *
