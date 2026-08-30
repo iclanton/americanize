@@ -1,5 +1,7 @@
 # eslint-plugin-dialect
 
+[![npm version](https://badge.fury.io/js/eslint-plugin-dialect.svg)](https://badge.fury.io/js/eslint-plugin-dialect)
+
 An ESLint rule that enforces a single English dialect - **American** (default) or **British** - in identifiers, comments and strings, and steers offending words to the configured dialect. It was inspired by [`eslint-plugin-communist-spelling`](https://github.com/dprgarner/eslint-plugin-communist-spelling) and is backed by the reviewable table in [`@americanize/british-american-spellings`](https://www.npmjs.com/package/@americanize/british-american-spellings). Both plugins can enforce either dialect; the difference is scope - `eslint-plugin-dialect` also checks comments, strings and import file paths (and auto-fixes comments and strings), while `communist-spelling` focuses on identifiers (with finer identifier controls).
 
 ```ts
