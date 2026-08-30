@@ -225,17 +225,38 @@ export function findNonPreferredSpellings(
   target: SpellingDialect,
   options: ISpellingLookupOptions = {}
 ): ISpellingMatch[] {
+  const { includeAmbiguous = false } = options;
+  const table: ReadonlyMap<string, string> = tableFor(target);
+  const skipAmbiguous: boolean = target === 'british' && !includeAmbiguous;
   const matches: ISpellingMatch[] = [];
 
-  for (const { value, index } of splitWords(text)) {
-    const to: string | undefined = getPreferredSpelling(value, target, options);
-    if (to !== undefined) {
-      matches.push({
-        word: value,
-        index,
-        from: value.toLowerCase(),
-        to
-      });
+  // Hot path: walk each maximal letter run, split it further on camelCase / acronym
+  // boundaries, and look each sub-word up inline. Kept allocation-light on purpose - no
+  // intermediate token objects, and the table and option checks are hoisted out of the
+  // per-word loop (this duplicates `getPreferredSpelling`, which stays for single-word use).
+  for (const runMatch of text.matchAll(WORD_PATTERN)) {
+    const run: string = runMatch[0];
+    const runStart: number = runMatch.index;
+
+    let wordStart: number = 0;
+    for (let i: number = 1; i <= run.length; i++) {
+      if (i !== run.length && !isSubwordBoundary(run, i)) {
+        continue;
+      }
+
+      const value: string = run.slice(wordStart, i);
+      const index: number = runStart + wordStart;
+      wordStart = i;
+
+      const lower: string = value.toLowerCase();
+      if (skipAmbiguous && AMBIGUOUS_AMERICAN_SPELLINGS.has(lower)) {
+        continue;
+      }
+
+      const preferred: string | undefined = table.get(lower);
+      if (preferred !== undefined) {
+        matches.push({ word: value, index, from: lower, to: matchCase(value, preferred) });
+      }
     }
   }
 
@@ -258,36 +279,6 @@ export function findBritishSpellings(text: string): ISpellingMatch[] {
  */
 export function findAmericanSpellings(text: string, options: ISpellingLookupOptions = {}): ISpellingMatch[] {
   return findNonPreferredSpellings(text, 'british', options);
-}
-
-interface IWordToken {
-  readonly value: string;
-  readonly index: number;
-}
-
-// Split a letter run further on camelCase / PascalCase boundaries: a lower-to-upper
-// transition (`fooBar`) and an acronym-to-word transition (`HTTPServer` -> `HTTP`,
-// `Server`). Each emitted token keeps its offset within the original text so a caller can
-// map it back to a source location.
-function splitWords(text: string): IWordToken[] {
-  const tokens: IWordToken[] = [];
-
-  for (const runMatch of text.matchAll(WORD_PATTERN)) {
-    const run: string = runMatch[0];
-    const runStart: number = runMatch.index;
-
-    let wordStart: number = 0;
-    for (let i: number = 1; i <= run.length; i++) {
-      const atEnd: boolean = i === run.length;
-      const boundary: boolean = atEnd || isSubwordBoundary(run, i);
-      if (boundary) {
-        tokens.push({ value: run.slice(wordStart, i), index: runStart + wordStart });
-        wordStart = i;
-      }
-    }
-  }
-
-  return tokens;
 }
 
 function isSubwordBoundary(run: string, i: number): boolean {
