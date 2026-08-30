@@ -11,7 +11,7 @@ import britishAmericanSpellings from './britishAmericanSpellings.json';
  * table is fully reviewable.
  *
  * The JSON is generated from the VarCon dataset by the `@americanize/spelling-data-generator`
- * tool (see NOTICE.md for attribution) — edit that generator, not the JSON by hand.
+ * tool (see NOTICE.md for attribution) - edit that generator, not the JSON by hand.
  *
  * @public
  */

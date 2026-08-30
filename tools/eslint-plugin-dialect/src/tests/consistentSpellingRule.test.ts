@@ -160,7 +160,7 @@ ruleTester.run('consistent-spelling', consistentSpellingRule, {
         }
       ]
     },
-    // The in-package file path of an import IS checked — report-only, since the file on disk
+    // The in-package file path of an import IS checked - report-only, since the file on disk
     // would also need renaming.
     {
       code: "import { x } from './colourPicker';",

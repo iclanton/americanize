@@ -17,7 +17,7 @@ export interface IConsistentSpellingOptions {
   /** Check string literals and template strings. Defaults to `true`. */
   readonly strings: boolean;
   /**
-   * Check the file-path portion of `import`/`require` specifiers — the part inside a package
+   * Check the file-path portion of `import`/`require` specifiers - the part inside a package
    * (`./utils/myModule`, `pkg/subpath`). The package name itself is never checked, since it
    * is chosen by the dependency, not by this codebase. Defaults to `true`.
    */
@@ -71,7 +71,7 @@ function resolveOptions(raw: unknown): IConsistentSpellingOptions {
  * default, or British via the `dialect` option).
  *
  * Comments and strings are auto-fixable. Identifiers and import file paths are reported only,
- * because renaming one — without following it to every reference or to the file on disk —
+ * because renaming one - without following it to every reference or to the file on disk -
  * would break the build.
  */
 export const consistentSpellingRule: Rule.RuleModule = {
@@ -181,7 +181,7 @@ export const consistentSpellingRule: Rule.RuleModule = {
         const specifier: string | undefined = importedModuleSpecifier(node);
         if (specifier !== undefined) {
           // An import/require specifier. Never touch the package name; only the in-package
-          // file path, and only when asked to — report-only, since the file must be renamed too.
+          // file path, and only when asked to - report-only, since the file must be renamed too.
           if (importPaths) {
             const fileStart: number = inPackageFilePathStart(specifier);
             if (fileStart < specifier.length) {
