@@ -33,11 +33,15 @@
     "lib-commonjs",
     "lib-esm",
     "lib-dts",
-    "NOTICE.md"
+    "NOTICE.md",
+    "!lib-commonjs/scripts",
+    "!lib-esm/scripts",
+    "!lib-dts/scripts"
   ],
   "scripts": {
     "build": "heft build --clean",
     "test": "heft test --clean",
+    "benchmark": "node ./lib-commonjs/scripts/throughput.js",
     "_phase:build": "heft run --only build -- --clean",
     "_phase:test": "heft run --only test -- --clean"
   },

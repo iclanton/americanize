@@ -4,7 +4,7 @@ import type { Rule } from 'eslint';
 import type { Identifier, Position, PrivateIdentifier, TemplateElement } from 'estree';
 
 import { findNonPreferredSpellings } from '@americanize/british-american-spellings';
-import type { ISpellingMatch, SpellingDialect } from '@americanize/british-american-spellings';
+import type { SpellingDialect } from '@americanize/british-american-spellings';
 
 /** Options accepted by the `consistent-spelling` rule. */
 export interface IConsistentSpellingOptions {
@@ -118,12 +118,6 @@ export const consistentSpellingRule: Rule.RuleModule = {
     const preferredLabel: string = DIALECT_LABEL[dialect];
     const offendingLabel: string = dialect === 'american' ? DIALECT_LABEL.british : DIALECT_LABEL.american;
 
-    function relevantMatches(text: string): ISpellingMatch[] {
-      return findNonPreferredSpellings(text, dialect, { includeAmbiguous }).filter(
-        (match: ISpellingMatch): boolean => !allowed.has(match.from)
-      );
-    }
-
     // Report every non-preferred spelling inside the source span [start, end). Reading the
     // span straight from the source text keeps match offsets aligned with the file, whether
     // the span is a comment, a quoted string, an identifier or part of an import path. In
@@ -133,7 +127,12 @@ export const consistentSpellingRule: Rule.RuleModule = {
     function reportSpan(start: number, end: number, mode: 'fix' | 'report'): void {
       const text: string = sourceCode.getText().slice(start, end);
 
-      for (const { index, word, to } of relevantMatches(text)) {
+      for (const match of findNonPreferredSpellings(text, dialect, { includeAmbiguous })) {
+        if (allowed.has(match.from)) {
+          continue;
+        }
+
+        const { index, word, to } = match;
         const matchStart: number = start + index;
         const matchEnd: number = matchStart + word.length;
         const loc: { start: Position; end: Position } = {

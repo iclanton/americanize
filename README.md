@@ -15,6 +15,7 @@ It ships two things:
 | ------------------------------------------ | ----------- | ------------------------------------------------------------------------ |
 | `libraries/british-american-spellings`     | [![npm version](https://badge.fury.io/js/%40americanize%2Fbritish-american-spellings.svg)](https://badge.fury.io/js/%40americanize%2Fbritish-american-spellings) | The spelling table (`BRITISH_TO_AMERICAN`) and its lookup helpers.       |
 | `tools/eslint-plugin-dialect`              | [![npm version](https://badge.fury.io/js/eslint-plugin-dialect.svg)](https://badge.fury.io/js/eslint-plugin-dialect) | The `consistent-spelling` ESLint rule. Depends on the spellings library. |
+| `tools/spelling-data-generator-heft-plugin` |             | Heft plugin that regenerates the spelling table (and `NOTICE.md`) from VarCon. |
 | `tools/eslint-config`                      |             | The shared ESLint flat config used to lint this repo (`_common`, `node`).|
 | `tools/local-build-rig`                    |             | The Heft `node` build/test rig every project extends.                    |
 
