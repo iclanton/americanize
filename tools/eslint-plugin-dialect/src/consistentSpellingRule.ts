@@ -260,15 +260,17 @@ export const consistentSpellingRule: Rule.RuleModule = {
       Member?: (host: IJsonNodeHost) => void;
       Element?: (host: IJsonNodeHost) => void;
     }
-    const jsonListener: IJsonListener = listener as unknown as IJsonListener;
+    const jsonListener: IJsonListener = listener as IJsonListener;
 
     if (identifiers || strings) {
       jsonListener.Member = (host: IJsonNodeHost): void => {
+        const { name, value } = host;
         if (identifiers) {
-          scanJsonString(host.name, 'report');
+          scanJsonString(name, 'report');
         }
+
         if (strings) {
-          scanJsonString(host.value, 'fix');
+          scanJsonString(value, 'fix');
         }
       };
     }
