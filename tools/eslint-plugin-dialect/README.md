@@ -17,6 +17,8 @@ npm install --save-dev eslint-plugin-dialect
 
 Requires ESLint 9+ (flat config).
 
+Beyond JavaScript and TypeScript, the rule also checks **JSON** (and JSONC/JSON5/RESJSON), **Markdown**, **HTML**, **CSS** (and best-effort SCSS) and **YAML** when you pair it with the relevant language plugin or parser - see the per-language sections below.
+
 ## Usage
 
 ```js
@@ -193,6 +195,32 @@ Value keywords (`color: red`), property and custom-property names (`--brand-colo
 ```
 
 In that mode class selectors, string values and `/* */` comments are still checked, but SCSS-only constructs are **not**: `//` line comments, `$variable` names and `@mixin`/`@include` are skipped (the CSS parser does not model them), and deep nesting can hide some selectors. **Sass** (the indented syntax) is not supported at all. For thorough SCSS/Sass linting, a dedicated tool such as Stylelint is the better fit.
+
+## Linting YAML
+
+YAML works a little differently: instead of a `language` plugin, it uses a **custom parser**, [`yaml-eslint-parser`](https://www.npmjs.com/package/yaml-eslint-parser), set through `languageOptions.parser` (install it alongside this one). No extra plugin is required:
+
+```js
+const dialect = require('eslint-plugin-dialect');
+const yamlParser = require('yaml-eslint-parser');
+
+module.exports = [
+  {
+    files: ['**/*.yaml', '**/*.yml'],
+    languageOptions: { parser: yamlParser },
+    plugins: { dialect },
+    rules: { 'dialect/consistent-spelling': 'warn' }
+  }
+];
+```
+
+What is checked:
+
+- **`#` comments** are prose - the **`comments`** toggle - and are **auto-fixed**. (The parser produces an ESTree-style AST with standard comments, so these flow through the same path as JavaScript comments.)
+- **Scalar values** - mapping values and sequence items, quoted or plain - map to **`strings`** and are auto-fixed.
+- **Mapping keys** map to **`identifiers`** and are **reported only**, since a key is usually a config field referenced elsewhere.
+
+Numbers, booleans and non-string scalars are left alone. Anchors/tags (`&ref`, `!!str`) wrap their value and are not followed, so a spelling inside a tagged value is skipped.
 
 ## The rule name
 
