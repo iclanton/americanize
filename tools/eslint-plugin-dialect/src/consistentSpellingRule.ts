@@ -17,10 +17,13 @@ type JsonDocumentNode = Parameters<Required<JSONRuleVisitor>['Document']>[0];
 type JsonMemberNode = Parameters<Required<JSONRuleVisitor>['Member']>[0];
 type JsonCheckableNode = JsonMemberNode['name'] | JsonMemberNode['value'];
 
-// `@html-eslint` (html/html) node types come from `@html-eslint/types`; only the visitor shape
-// (`IHtmlListener` below) is hand-rolled, since the plugin does not publish one. Only
-// user-facing text is checked: element `Text`, the body of `<!-- -->` comments
-// (`CommentContent`) and a curated set of attribute values.
+// `@html-eslint` (html/html) node types come from `@html-eslint/types`. The plugin publishes no
+// visitor type (unlike `@eslint/json`/`@eslint/markdown`), and a visitor cannot be derived from
+// its `AnyHTMLNode` union either: the underlying `es-html-parser` types each node's `type` as the
+// whole `NodeTypes` enum rather than a per-node literal, so a discriminated mapped type collapses.
+// Hence the small `IHtmlListener` below is declared by hand, using those published node types.
+// Only user-facing text is checked: element `Text`, `<!-- -->` comment bodies (`CommentContent`)
+// and a curated set of attribute values.
 type HtmlValueNode = Text | CommentContent | AttributeValue;
 
 // HTML attribute names whose values are human-readable prose (auto-fixed, like a string).
@@ -331,7 +334,7 @@ export const consistentSpellingRule: Rule.RuleModule = {
     // Under a Markdown `language`, ESLint dispatches these node types instead. Prose is
     // documentation-style text, so it maps to the `comments` toggle and is auto-fixable;
     // visiting only `text` leaves skips code spans, fenced code blocks and link URLs.
-    const markdownListener: MarkdownRuleVisitor = listener as unknown as MarkdownRuleVisitor;
+    const markdownListener: MarkdownRuleVisitor = listener as MarkdownRuleVisitor;
 
     if (comments) {
       markdownListener.text = (node): void => {
@@ -354,7 +357,7 @@ export const consistentSpellingRule: Rule.RuleModule = {
       CommentContent?: (node: CommentContent) => void;
       Attribute?: (node: Attribute) => void;
     }
-    const htmlListener: IHtmlListener = listener as unknown as IHtmlListener;
+    const htmlListener: IHtmlListener = listener as IHtmlListener;
 
     function scanHtmlNode(node: HtmlValueNode | undefined, mode: 'fix' | 'report'): void {
       if (node?.range !== undefined) {
