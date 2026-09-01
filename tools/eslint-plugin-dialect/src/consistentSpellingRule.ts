@@ -4,6 +4,12 @@ import type { Rule } from 'eslint';
 import type { Identifier, Position, PrivateIdentifier, TemplateElement } from 'estree';
 import type { JSONRuleVisitor } from '@eslint/json';
 import type { MarkdownRuleVisitor } from '@eslint/markdown';
+import type {
+  Attribute as HtmlAttribute,
+  AttributeValue as HtmlAttributeValue,
+  CommentContent as HtmlCommentContent,
+  Text as HtmlText
+} from '@html-eslint/types';
 
 import { findNonPreferredSpellings } from '@americanize/british-american-spellings';
 import type { SpellingDialect } from '@americanize/british-american-spellings';
@@ -15,6 +21,47 @@ import type { SpellingDialect } from '@americanize/british-american-spellings';
 type JsonDocumentNode = Parameters<Required<JSONRuleVisitor>['Document']>[0];
 type JsonMemberNode = Parameters<Required<JSONRuleVisitor>['Member']>[0];
 type JsonCheckableNode = JsonMemberNode['name'] | JsonMemberNode['value'];
+
+// `@html-eslint` (html/html) node types come from `@html-eslint/types`. The plugin publishes no
+// visitor type (unlike `@eslint/json`/`@eslint/markdown`), and a visitor cannot be derived from
+// its `AnyHTMLNode` union either: the underlying `es-html-parser` types each node's `type` as the
+// whole `NodeTypes` enum rather than a per-node literal, so a discriminated mapped type collapses.
+// Hence the small `IHtmlListener` below is declared by hand, using those published node types.
+// Only user-facing text is checked: element `Text`, `<!-- -->` comment bodies (`CommentContent`)
+// and a curated set of attribute values.
+type HtmlValueNode = HtmlText | HtmlCommentContent | HtmlAttributeValue;
+
+// HTML attribute names whose values are human-readable prose (auto-fixed, like a string).
+const HTML_PROSE_ATTRIBUTES: ReadonlySet<string> = new Set<string>([
+  'alt',
+  'title',
+  'placeholder',
+  'aria-label',
+  'aria-description',
+  'aria-placeholder',
+  'aria-roledescription',
+  'aria-valuetext'
+]);
+
+// HTML attribute names whose values are author-chosen identifiers or references to them (a CSS
+// class, an element id, a form-control name, ...). These are checked but *reported only* - never
+// auto-fixed - because renaming one would break the stylesheet, script or anchor that refers to
+// it, exactly like a JavaScript identifier. Everything else (URLs, `data-*`, `type`, ...) is
+// left alone entirely.
+const HTML_IDENTIFIER_ATTRIBUTES: ReadonlySet<string> = new Set<string>([
+  'class',
+  'id',
+  'name',
+  'for',
+  'form',
+  'list',
+  'headers',
+  'aria-labelledby',
+  'aria-describedby',
+  'aria-controls',
+  'aria-owns',
+  'aria-activedescendant'
+]);
 
 /** Options accepted by the `consistent-spelling` rule. */
 export interface IConsistentSpellingOptions {
@@ -292,7 +339,7 @@ export const consistentSpellingRule: Rule.RuleModule = {
     // Under a Markdown `language`, ESLint dispatches these node types instead. Prose is
     // documentation-style text, so it maps to the `comments` toggle and is auto-fixable;
     // visiting only `text` leaves skips code spans, fenced code blocks and link URLs.
-    const markdownListener: MarkdownRuleVisitor = listener as unknown as MarkdownRuleVisitor;
+    const markdownListener: MarkdownRuleVisitor = listener as MarkdownRuleVisitor;
 
     if (comments) {
       markdownListener.text = (node): void => {
@@ -300,6 +347,52 @@ export const consistentSpellingRule: Rule.RuleModule = {
         const end: number | undefined = node.position?.end.offset;
         if (start !== undefined && end !== undefined) {
           reportSpan(start, end, 'fix');
+        }
+      };
+    }
+
+    // `@html-eslint` (html/html) support. Element text and `<!-- -->` comment bodies are prose
+    // (the `comments` toggle); prose attribute values map to `strings` (auto-fixed) and
+    // identifier attributes (class, id, ...) to `identifiers` (report-only). Tags, URLs and
+    // other attributes are left alone. (The HTML root is also named `Program`, but the ESTree
+    // `Program` handler above is a harmless no-op here - HTML exposes no ESLint-style comments,
+    // so its `getAllComments()` is empty.)
+    interface IHtmlListener {
+      Text?: (node: HtmlText) => void;
+      CommentContent?: (node: HtmlCommentContent) => void;
+      Attribute?: (node: HtmlAttribute) => void;
+    }
+    const htmlListener: IHtmlListener = listener as IHtmlListener;
+
+    function scanHtmlNode(node: HtmlValueNode | undefined, mode: 'fix' | 'report'): void {
+      if (node?.range) {
+        const {
+          range: [start, end]
+        } = node;
+        reportSpan(start, end, mode);
+      }
+    }
+
+    if (comments) {
+      htmlListener.Text = (node): void => {
+        scanHtmlNode(node, 'fix');
+      };
+      htmlListener.CommentContent = (node): void => {
+        scanHtmlNode(node, 'fix');
+      };
+    }
+
+    if (identifiers || strings) {
+      htmlListener.Attribute = (node): void => {
+        const {
+          key: { value: rawName },
+          value
+        } = node;
+        const normalizedValue: string = rawName.toLowerCase();
+        if (strings && HTML_PROSE_ATTRIBUTES.has(normalizedValue)) {
+          scanHtmlNode(value, 'fix');
+        } else if (identifiers && HTML_IDENTIFIER_ATTRIBUTES.has(normalizedValue)) {
+          scanHtmlNode(value, 'report');
         }
       };
     }
