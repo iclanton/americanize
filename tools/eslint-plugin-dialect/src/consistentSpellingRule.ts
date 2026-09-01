@@ -4,7 +4,12 @@ import type { Rule } from 'eslint';
 import type { Identifier, Position, PrivateIdentifier, TemplateElement } from 'estree';
 import type { JSONRuleVisitor } from '@eslint/json';
 import type { MarkdownRuleVisitor } from '@eslint/markdown';
-import type { Attribute, AttributeValue, CommentContent, Text } from '@html-eslint/types';
+import type {
+  Attribute as HtmlAttribute,
+  AttributeValue as HtmlAttributeValue,
+  CommentContent as HtmlCommentContent,
+  Text as HtmlText
+} from '@html-eslint/types';
 
 import { findNonPreferredSpellings } from '@americanize/british-american-spellings';
 import type { SpellingDialect } from '@americanize/british-american-spellings';
@@ -24,7 +29,7 @@ type JsonCheckableNode = JsonMemberNode['name'] | JsonMemberNode['value'];
 // Hence the small `IHtmlListener` below is declared by hand, using those published node types.
 // Only user-facing text is checked: element `Text`, `<!-- -->` comment bodies (`CommentContent`)
 // and a curated set of attribute values.
-type HtmlValueNode = Text | CommentContent | AttributeValue;
+type HtmlValueNode = HtmlText | HtmlCommentContent | HtmlAttributeValue;
 
 // HTML attribute names whose values are human-readable prose (auto-fixed, like a string).
 const HTML_PROSE_ATTRIBUTES: ReadonlySet<string> = new Set<string>([
@@ -353,15 +358,18 @@ export const consistentSpellingRule: Rule.RuleModule = {
     // `Program` handler above is a harmless no-op here - HTML exposes no ESLint-style comments,
     // so its `getAllComments()` is empty.)
     interface IHtmlListener {
-      Text?: (node: Text) => void;
-      CommentContent?: (node: CommentContent) => void;
-      Attribute?: (node: Attribute) => void;
+      Text?: (node: HtmlText) => void;
+      CommentContent?: (node: HtmlCommentContent) => void;
+      Attribute?: (node: HtmlAttribute) => void;
     }
     const htmlListener: IHtmlListener = listener as IHtmlListener;
 
     function scanHtmlNode(node: HtmlValueNode | undefined, mode: 'fix' | 'report'): void {
-      if (node?.range !== undefined) {
-        reportSpan(node.range[0], node.range[1], mode);
+      if (node?.range) {
+        const {
+          range: [start, end]
+        } = node;
+        reportSpan(start, end, mode);
       }
     }
 
@@ -376,11 +384,15 @@ export const consistentSpellingRule: Rule.RuleModule = {
 
     if (identifiers || strings) {
       htmlListener.Attribute = (node): void => {
-        const name: string | undefined = node.key.value.toLowerCase();
-        if (strings && HTML_PROSE_ATTRIBUTES.has(name)) {
-          scanHtmlNode(node.value, 'fix');
-        } else if (identifiers && HTML_IDENTIFIER_ATTRIBUTES.has(name)) {
-          scanHtmlNode(node.value, 'report');
+        const {
+          key: { value: rawName },
+          value
+        } = node;
+        const normalizedValue: string = rawName.toLowerCase();
+        if (strings && HTML_PROSE_ATTRIBUTES.has(normalizedValue)) {
+          scanHtmlNode(value, 'fix');
+        } else if (identifiers && HTML_IDENTIFIER_ATTRIBUTES.has(normalizedValue)) {
+          scanHtmlNode(value, 'report');
         }
       };
     }
