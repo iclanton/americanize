@@ -103,7 +103,7 @@ In JSON, the rule maps onto the same `identifiers` / `strings` toggles as in Jav
 - **String values** are treated like string literals - **auto-fixed**.
 - **Object keys** are treated like identifiers - **reported only**, since a key is usually a contract other code depends on. Set `identifiers: false` to ignore keys entirely (handy for pure data files).
 
-RESJSON is just JSON, so the same block covers it - point `files` at `**/*.resjson`. For JSON with comments and trailing commas use `language: 'json/jsonc'`, and for JSON5 use `language: 'json/json5'`; add the matching `files` glob (`**/*.jsonc`, `**/*.json5`). In JSONC, `//` and `/* */` comments are *not* checked (only keys and string values). In JSON5, an unquoted key is checked like any other key. Because the JSON handling keys off the language, one set-up enforces a dialect across `.json`, `.jsonc`, `.json5` and `.resjson`.
+RESJSON is just JSON, so the same block covers it - point `files` at `**/*.resjson`. For JSON with comments and trailing commas use `language: 'json/jsonc'`, and for JSON5 use `language: 'json/json5'`; add the matching `files` glob (`**/*.jsonc`, `**/*.json5`). In JSONC and JSON5, `//` and `/* */` comments are checked under the `comments` toggle (auto-fixed, like a JavaScript comment). In JSON5, an unquoted key is checked like any other key. Because the JSON handling keys off the language, one set-up enforces a dialect across `.json`, `.jsonc`, `.json5` and `.resjson`.
 
 ## Linting Markdown
 

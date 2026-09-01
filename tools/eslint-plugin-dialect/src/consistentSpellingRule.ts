@@ -273,6 +273,23 @@ export const consistentSpellingRule: Rule.RuleModule = {
       };
     }
 
+    // JSONC/JSON5 comments are not traversable AST nodes and `@eslint/json` exposes no
+    // `getAllComments()`, but they appear as `LineComment`/`BlockComment` entries in the token
+    // stream. Scan them once at the document root, under the `comments` toggle (auto-fixable,
+    // like a JavaScript comment). Plain JSON has no comment tokens, so this is a no-op there.
+    if (comments) {
+      jsonListener.Document = (): void => {
+        const { tokens } = sourceCode.ast as unknown as {
+          tokens?: ReadonlyArray<{ type: string; range: readonly [number, number] }>;
+        };
+        for (const token of tokens ?? []) {
+          if (token.type === 'LineComment' || token.type === 'BlockComment') {
+            reportSpan(token.range[0], token.range[1], 'fix');
+          }
+        }
+      };
+    }
+
     // `@eslint/markdown` (mdast) support, via the visitor type `@eslint/markdown` publishes.
     // Under a Markdown `language`, ESLint dispatches these node types instead. Prose is
     // documentation-style text, so it maps to the `comments` toggle and is auto-fixable;
