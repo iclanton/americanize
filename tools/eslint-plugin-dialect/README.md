@@ -153,6 +153,47 @@ What is checked, and how it maps onto the toggles:
 
 Tag names, attribute keys, `data-*` values and URL attributes (`src`, `href`) are structural, not prose, so they are never touched. (The HTML node types come from `@html-eslint/types`; only the visitor shape is declared locally, since `@html-eslint` does not publish one - unlike the JSON and Markdown adapters, which use the plugins' own visitor types.)
 
+## Linting CSS (and SCSS)
+
+The rule checks CSS when paired with ESLint's official [`@eslint/css`](https://www.npmjs.com/package/@eslint/css) language plugin (install it alongside this one):
+
+```js
+const dialect = require('eslint-plugin-dialect');
+const css = require('@eslint/css');
+
+module.exports = [
+  {
+    files: ['**/*.css'],
+    language: 'css/css',
+    plugins: { css, dialect },
+    rules: { 'dialect/consistent-spelling': 'warn' }
+  }
+];
+```
+
+What is checked:
+
+- **`/* */` comments** and **string values** (`content: "…"`) are prose - the **`comments`** / **`strings`** toggles - and are **auto-fixed**.
+- **Class and id selector names** (`.lightColour`, `#mainColour`) map to **`identifiers`** and are **reported only**, since renaming a class or id would break the HTML/JS that references it.
+
+Value keywords (`color: red`), property and custom-property names (`--brand-colour`) and URLs (`url(...)`) are left alone.
+
+### SCSS / Sass
+
+`@eslint/css` only ships a `css/css` language - there is no SCSS or Sass parser. SCSS files can be linted **best-effort** by adding the `.scss` glob and turning on the parser's `tolerant` mode, which recovers from the syntax it does not understand:
+
+```js
+{
+  files: ['**/*.scss'],
+  language: 'css/css',
+  languageOptions: { tolerant: true },
+  plugins: { css, dialect },
+  rules: { 'dialect/consistent-spelling': 'warn' }
+}
+```
+
+In that mode class selectors, string values and `/* */` comments are still checked, but SCSS-only constructs are **not**: `//` line comments, `$variable` names and `@mixin`/`@include` are skipped (the CSS parser does not model them), and deep nesting can hide some selectors. **Sass** (the indented syntax) is not supported at all. For thorough SCSS/Sass linting, a dedicated tool such as Stylelint is the better fit.
+
 ## The rule name
 
 The rule is `dialect/consistent-spelling`, not `american-spelling`, because it enforces *either* dialect. `dialect: 'american'` is just the default.

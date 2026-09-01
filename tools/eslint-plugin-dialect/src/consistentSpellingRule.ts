@@ -2,6 +2,7 @@
 
 import type { Rule } from 'eslint';
 import type { Identifier, Position, PrivateIdentifier, TemplateElement } from 'estree';
+import type { CSSRuleVisitor, CSSSourceCode, CSSSyntaxElement } from '@eslint/css';
 import type { JSONRuleVisitor } from '@eslint/json';
 import type { MarkdownRuleVisitor } from '@eslint/markdown';
 import type {
@@ -394,6 +395,48 @@ export const consistentSpellingRule: Rule.RuleModule = {
         } else if (identifiers && HTML_IDENTIFIER_ATTRIBUTES.has(normalizedValue)) {
           scanHtmlNode(value, 'report');
         }
+      };
+    }
+
+    // `@eslint/css` (css/css) support, via the visitor type `@eslint/css` publishes. `/* */`
+    // comments and string values are prose (the `comments`/`strings` toggles, auto-fixed); class
+    // and id selector names are identifiers (report-only), since renaming one would break the
+    // HTML/JS that references it. Value keywords, URLs and property names are left alone. CSS
+    // nodes carry source offsets on `loc`. (A CSS `Identifier` value node reaches the ESTree
+    // `Identifier` handler above, which no-ops on a parentless node.)
+    const cssListener: CSSRuleVisitor = listener as CSSRuleVisitor;
+
+    function scanCssLoc(loc: CSSSyntaxElement['loc'], mode: 'fix' | 'report'): void {
+      if (loc) {
+        reportSpan(loc.start.offset, loc.end.offset, mode);
+      }
+    }
+
+    if (comments) {
+      cssListener.StyleSheet = (): void => {
+        const { comments: cssComments } = sourceCode as unknown as CSSSourceCode;
+        for (const comment of cssComments ?? []) {
+          scanCssLoc(comment.loc, 'fix');
+        }
+      };
+    }
+
+    if (strings) {
+      cssListener.String = (node): void => {
+        // `String` is also the Momoa (JSON) node type; those carry a `range` while css-tree
+        // nodes do not, so skip them here (JSON strings are handled by `Member`/`Element`).
+        if (!('range' in node)) {
+          scanCssLoc(node.loc, 'fix');
+        }
+      };
+    }
+
+    if (identifiers) {
+      cssListener.ClassSelector = (node): void => {
+        scanCssLoc(node.loc, 'report');
+      };
+      cssListener.IdSelector = (node): void => {
+        scanCssLoc(node.loc, 'report');
       };
     }
 
