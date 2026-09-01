@@ -2,34 +2,18 @@
 
 import type { Rule } from 'eslint';
 import type { Identifier, Position, PrivateIdentifier, TemplateElement } from 'estree';
+import type { JSONRuleVisitor } from '@eslint/json';
+import type { MarkdownRuleVisitor } from '@eslint/markdown';
 
 import { findNonPreferredSpellings } from '@americanize/british-american-spellings';
 import type { SpellingDialect } from '@americanize/british-american-spellings';
 
-// Minimal structural shape of the `@eslint/json` (Momoa) AST nodes the rule reacts to. The
-// plugin does not depend on `@eslint/json` at runtime - it only registers these node types so
-// that, when a consumer configures a JSON `language`, object keys and string values are
-// checked. A key is the `name` of a `Member`; string values are the `value` of a `Member` or
-// an array `Element`.
+// Minimal structural shape shared by the string-bearing Momoa nodes the JSON adapter reads (a
+// `String` key or value). The richer node typing comes from `JSONRuleVisitor` below; this just
+// lets one small helper accept either without importing Momoa's node types directly.
 interface IJsonNode {
   readonly type?: string;
   readonly range?: readonly [number, number];
-}
-
-interface IJsonNodeHost {
-  readonly name?: IJsonNode;
-  readonly value?: IJsonNode;
-}
-
-// Minimal structural shape of the `@eslint/markdown` (mdast) node the rule reacts to. When a
-// consumer configures a Markdown `language`, prose lives in `text` leaf nodes; those are the
-// only nodes visited, so code spans, fenced code blocks and link URLs (none of which are `text`
-// children) are left alone. mdast carries source offsets on `position` rather than `range`.
-interface IMarkdownText {
-  readonly position?: {
-    readonly start?: { readonly offset?: number };
-    readonly end?: { readonly offset?: number };
-  };
 }
 
 /** Options accepted by the `consistent-spelling` rule. */
@@ -265,17 +249,13 @@ export const consistentSpellingRule: Rule.RuleModule = {
       }
     }
 
-    // `listener` is typed for the ESTree AST; register the Momoa keys through an explicitly
-    // keyed view (an index-signature cast would force bracket access and trip `dot-notation`).
-    interface IJsonListener {
-      Member?: (host: IJsonNodeHost) => void;
-      Element?: (host: IJsonNodeHost) => void;
-    }
-    const jsonListener: IJsonListener = listener as IJsonListener;
+    // `listener` is typed for the ESTree AST; register the Momoa keys through the visitor type
+    // that `@eslint/json` publishes, so the node arguments are fully typed (`MemberNode`, ...).
+    const jsonListener: JSONRuleVisitor = listener as unknown as JSONRuleVisitor;
 
     if (identifiers || strings) {
-      jsonListener.Member = (host: IJsonNodeHost): void => {
-        const { name, value } = host;
+      jsonListener.Member = (node): void => {
+        const { name, value } = node;
         if (identifiers) {
           scanJsonString(name, 'report');
         }
@@ -287,24 +267,21 @@ export const consistentSpellingRule: Rule.RuleModule = {
     }
 
     if (strings) {
-      jsonListener.Element = (host: IJsonNodeHost): void => {
-        scanJsonString(host.value, 'fix');
+      jsonListener.Element = (node): void => {
+        scanJsonString(node.value, 'fix');
       };
     }
 
-    // `@eslint/markdown` (mdast) support. Under a Markdown `language`, ESLint dispatches these
-    // node types instead. Prose is documentation-style text, so it maps to the `comments`
-    // toggle and is auto-fixable; visiting only `text` leaves skips code spans, fenced code
-    // blocks and link URLs.
-    interface IMarkdownListener {
-      text?: (node: IMarkdownText) => void;
-    }
-    const markdownListener: IMarkdownListener = listener as IMarkdownListener;
+    // `@eslint/markdown` (mdast) support, via the visitor type `@eslint/markdown` publishes.
+    // Under a Markdown `language`, ESLint dispatches these node types instead. Prose is
+    // documentation-style text, so it maps to the `comments` toggle and is auto-fixable;
+    // visiting only `text` leaves skips code spans, fenced code blocks and link URLs.
+    const markdownListener: MarkdownRuleVisitor = listener as unknown as MarkdownRuleVisitor;
 
     if (comments) {
-      markdownListener.text = (node: IMarkdownText): void => {
-        const start: number | undefined = node.position?.start?.offset;
-        const end: number | undefined = node.position?.end?.offset;
+      markdownListener.text = (node): void => {
+        const start: number | undefined = node.position?.start.offset;
+        const end: number | undefined = node.position?.end.offset;
         if (start !== undefined && end !== undefined) {
           reportSpan(start, end, 'fix');
         }
