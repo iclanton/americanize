@@ -6,15 +6,30 @@ import type { Identifier, Position, PrivateIdentifier, TemplateElement } from 'e
 import { findNonPreferredSpellings } from '@americanize/british-american-spellings';
 import type { SpellingDialect } from '@americanize/british-american-spellings';
 
+// Minimal structural shape of the `@eslint/json` (Momoa) AST nodes the rule reacts to. The
+// plugin does not depend on `@eslint/json` at runtime - it only registers these node types so
+// that, when a consumer configures a JSON `language`, object keys and string values are
+// checked. A key is the `name` of a `Member`; string values are the `value` of a `Member` or
+// an array `Element`.
+interface IJsonNode {
+  readonly type?: string;
+  readonly range?: readonly [number, number];
+}
+
+interface IJsonNodeHost {
+  readonly name?: IJsonNode;
+  readonly value?: IJsonNode;
+}
+
 /** Options accepted by the `consistent-spelling` rule. */
 export interface IConsistentSpellingOptions {
   /** Which English to enforce: `'american'` (default) or `'british'`. */
   readonly dialect: SpellingDialect;
-  /** Check identifiers (variable, function, class and member names). Defaults to `true`. */
+  /** Check identifiers (variable, function, class and member names; JSON object keys). Defaults to `true`. */
   readonly identifiers: boolean;
   /** Check `//` and block comments. Defaults to `true`. */
   readonly comments: boolean;
-  /** Check string literals and template strings. Defaults to `true`. */
+  /** Check string literals and template strings (JSON string values). Defaults to `true`. */
   readonly strings: boolean;
   /**
    * Check the file-path portion of `import`/`require` specifiers - the part inside a package
@@ -225,6 +240,44 @@ export const consistentSpellingRule: Rule.RuleModule = {
           const [start, end] = range;
           reportSpan(start, end, 'report');
         }
+      };
+    }
+
+    // `@eslint/json` (Momoa) support. When a JSON `language` is active, ESLint dispatches these
+    // node types instead of the ESTree ones above (the two sets never collide, so a single rule
+    // can serve both). Object keys map to the `identifiers` toggle and are report-only, since a
+    // key rename is a data-contract change; string values map to the `strings` toggle and are
+    // auto-fixable, exactly like their JavaScript counterparts.
+    function scanJsonString(node: IJsonNode | undefined, mode: 'fix' | 'report'): void {
+      if (node?.type === 'String' && node.range !== undefined) {
+        reportSpan(node.range[0], node.range[1], mode);
+      }
+    }
+
+    // `listener` is typed for the ESTree AST; register the Momoa keys through an explicitly
+    // keyed view (an index-signature cast would force bracket access and trip `dot-notation`).
+    interface IJsonListener {
+      Member?: (host: IJsonNodeHost) => void;
+      Element?: (host: IJsonNodeHost) => void;
+    }
+    const jsonListener: IJsonListener = listener as IJsonListener;
+
+    if (identifiers || strings) {
+      jsonListener.Member = (host: IJsonNodeHost): void => {
+        const { name, value } = host;
+        if (identifiers) {
+          scanJsonString(name, 'report');
+        }
+
+        if (strings) {
+          scanJsonString(value, 'fix');
+        }
+      };
+    }
+
+    if (strings) {
+      jsonListener.Element = (host: IJsonNodeHost): void => {
+        scanJsonString(host.value, 'fix');
       };
     }
 

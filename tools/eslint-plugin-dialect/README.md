@@ -78,6 +78,33 @@ module.exports = [
 
 `camelCase`, `snake_case`, `kebab-case` and `SCREAMING_CASE` are split into words, so `favouriteColour` flags both `favourite` and `Colour` independently.
 
+## Linting JSON (and RESJSON)
+
+The rule also works on JSON when you pair it with ESLint's official [`@eslint/json`](https://www.npmjs.com/package/@eslint/json) language plugin (install it alongside this one). Add a config block that selects the JSON language for the files you want to check:
+
+```js
+const dialect = require('eslint-plugin-dialect');
+const json = require('@eslint/json');
+
+module.exports = [
+  {
+    files: ['**/*.json', '**/*.resjson'],
+    // Skip machine-owned or schema-fixed files whose keys you cannot rename.
+    ignores: ['**/package.json', '**/tsconfig*.json'],
+    language: 'json/json',
+    plugins: { json, dialect },
+    rules: { 'dialect/consistent-spelling': 'warn' }
+  }
+];
+```
+
+In JSON, the rule maps onto the same `identifiers` / `strings` toggles as in JavaScript:
+
+- **String values** are treated like string literals - **auto-fixed**.
+- **Object keys** are treated like identifiers - **reported only**, since a key is usually a contract other code depends on. Set `identifiers: false` to ignore keys entirely (handy for pure data files).
+
+RESJSON is just JSON, so the same block covers it - point `files` at `**/*.resjson`. For JSON with comments or trailing commas, use `language: 'json/jsonc'` (or `'json/json5'`); see the `@eslint/json` docs. Because the JSON handling keys off the language, one config block can enforce a dialect across `.json`, `.jsonc` and `.resjson` without any change to the rule.
+
 ## The rule name
 
 The rule is `dialect/consistent-spelling`, not `american-spelling`, because it enforces *either* dialect. `dialect: 'american'` is just the default.
