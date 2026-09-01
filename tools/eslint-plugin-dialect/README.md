@@ -2,7 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/eslint-plugin-dialect.svg)](https://badge.fury.io/js/eslint-plugin-dialect)
 
-An ESLint rule that enforces a single English dialect - **American** (default) or **British** - in identifiers, comments and strings, and steers offending words to the configured dialect. It was inspired by [`eslint-plugin-communist-spelling`](https://github.com/dprgarner/eslint-plugin-communist-spelling) and is backed by the reviewable table in [`@americanize/british-american-spellings`](https://www.npmjs.com/package/@americanize/british-american-spellings). Both plugins can enforce either dialect; the difference is scope - `eslint-plugin-dialect` also checks comments, strings and import file paths (and auto-fixes comments and strings), while `communist-spelling` focuses on identifiers (with finer identifier controls).
+An ESLint rule that enforces a single English dialect - **American** (default), **British**, **Canadian** or **Australian** - in identifiers, comments and strings, and steers offending words to the configured dialect. It was inspired by [`eslint-plugin-communist-spelling`](https://github.com/dprgarner/eslint-plugin-communist-spelling) and is backed by the reviewable table in [`@americanize/british-american-spellings`](https://www.npmjs.com/package/@americanize/british-american-spellings). Both plugins can enforce either dialect; the difference is scope - `eslint-plugin-dialect` also checks comments, strings and import file paths (and auto-fixes comments and strings), while `communist-spelling` focuses on identifiers (with finer identifier controls).
 
 ```ts
 const favouriteColour = 1; // 👉 Prefer the American spelling 'favorite' over the British 'favourite'.
@@ -35,14 +35,16 @@ module.exports = [
 ];
 ```
 
-Or spread a bundled config - `recommended` (American) or `british`:
+Or spread a bundled config - `recommended` (American), `british`, `canadian` or `australian`:
 
 ```js
 const dialect = require('eslint-plugin-dialect');
 
 module.exports = [
   { plugins: { dialect }, ...dialect.configs.recommended } // American
-  // { plugins: { dialect }, ...dialect.configs.british }  // British
+  // { plugins: { dialect }, ...dialect.configs.british }     // British
+  // { plugins: { dialect }, ...dialect.configs.canadian }    // Canadian
+  // { plugins: { dialect }, ...dialect.configs.australian }  // Australian
 ];
 ```
 
@@ -52,7 +54,7 @@ module.exports = [
 'dialect/consistent-spelling': [
   'error',
   {
-    dialect: 'american', //   'american' (default) or 'british'
+    dialect: 'american', //   'american' (default), 'british', 'canadian' or 'australian'
     identifiers: true, //     check variable, function, class and member names
     comments: true, //        check line and block comments
     strings: true, //         check string literals and template strings
@@ -65,7 +67,7 @@ module.exports = [
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `dialect` | `'american'` | Which dialect to enforce. |
+| `dialect` | `'american'` | Which dialect to enforce: `'american'`, `'british'`, `'canadian'` or `'australian'`. |
 | `identifiers` | `true` | Check identifier names. |
 | `comments` | `true` | Check `//` and block comments. |
 | `strings` | `true` | Check string literals and template strings. |
@@ -224,4 +226,4 @@ Numbers, booleans and non-string scalars are left alone. Anchors/tags (`&ref`, `
 
 ## The rule name
 
-The rule is `dialect/consistent-spelling`, not `american-spelling`, because it enforces *either* dialect. `dialect: 'american'` is just the default.
+The rule is `dialect/consistent-spelling`, not `american-spelling`, because it enforces *any* of the supported dialects. `dialect: 'american'` is just the default.

@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "@americanize/british-american-spellings",
+      "comment": "Add Canadian and Australian dialects. `SpellingDialect` now accepts `'canadian'` and `'australian'`, with new `getCanadianSpelling`/`getAustralianSpelling` and `findCanadianSpellings`/`findAustralianSpellings` shorthands. The British/American tables and results are unchanged.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@americanize/british-american-spellings",
+  "email": "iclanton@users.noreply.github.com"
+}

@@ -67,7 +67,7 @@ const HTML_IDENTIFIER_ATTRIBUTES: ReadonlySet<string> = new Set<string>([
 
 /** Options accepted by the `consistent-spelling` rule. */
 export interface IConsistentSpellingOptions {
-  /** Which English to enforce: `'american'` (default) or `'british'`. */
+  /** Which English to enforce: `'american'` (default), `'british'`, `'canadian'` or `'australian'`. */
   readonly dialect: SpellingDialect;
   /** Check identifiers (variable, function, class and member names; JSON object keys). Defaults to `true`. */
   readonly identifiers: boolean;
@@ -104,7 +104,19 @@ const DEFAULT_OPTIONS: IConsistentSpellingOptions = {
 // Human-readable name of each dialect, for the message the developer reads.
 const DIALECT_LABEL: Record<SpellingDialect, string> = {
   american: 'American',
-  british: 'British'
+  british: 'British',
+  canadian: 'Canadian',
+  australian: 'Australian'
+};
+
+// The word being corrected can come from more than one dialect (a Canadian correction may
+// replace an American, British or Australian spelling), so name the counterpart precisely only
+// for the American/British pair and fall back to a generic label otherwise.
+const OFFENDING_LABEL: Record<SpellingDialect, string> = {
+  american: 'British',
+  british: 'American',
+  canadian: 'non-Canadian',
+  australian: 'non-Australian'
 };
 
 function resolveOptions(raw: unknown): IConsistentSpellingOptions {
@@ -127,7 +139,7 @@ function resolveOptions(raw: unknown): IConsistentSpellingOptions {
 /**
  * The `consistent-spelling` rule: flags spellings of the wrong dialect in identifiers,
  * comments and string literals and steers them to the configured dialect (American by
- * default, or British via the `dialect` option).
+ * default, or British/Canadian/Australian via the `dialect` option).
  *
  * Comments and strings are auto-fixable. Identifiers and import file paths are reported only,
  * because renaming one - without following it to every reference or to the file on disk -
@@ -138,7 +150,7 @@ export const consistentSpellingRule: Rule.RuleModule = {
     type: 'suggestion',
     docs: {
       description:
-        'Enforce a single English dialect (American or British) in identifiers, comments and strings.',
+        'Enforce a single English dialect (American, British, Canadian or Australian) in identifiers, comments and strings.',
       recommended: true
     },
     fixable: 'code',
@@ -149,7 +161,7 @@ export const consistentSpellingRule: Rule.RuleModule = {
       {
         type: 'object',
         properties: {
-          dialect: { enum: ['american', 'british'] },
+          dialect: { enum: ['american', 'british', 'canadian', 'australian'] },
           identifiers: { type: 'boolean' },
           comments: { type: 'boolean' },
           strings: { type: 'boolean' },
@@ -175,7 +187,7 @@ export const consistentSpellingRule: Rule.RuleModule = {
     const allowed: ReadonlySet<string> = new Set(allow);
 
     const preferredLabel: string = DIALECT_LABEL[dialect];
-    const offendingLabel: string = dialect === 'american' ? DIALECT_LABEL.british : DIALECT_LABEL.american;
+    const offendingLabel: string = OFFENDING_LABEL[dialect];
 
     // Report every non-preferred spelling inside the source span [start, end). Reading the
     // span straight from the source text keeps match offsets aligned with the file, whether
