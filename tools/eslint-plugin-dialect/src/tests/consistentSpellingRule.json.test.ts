@@ -30,23 +30,28 @@ interface IRuleOptions {
   readonly dialect?: 'american' | 'british';
   readonly identifiers?: boolean;
   readonly strings?: boolean;
+  readonly comments?: boolean;
 }
 
-function makeConfig(options: IRuleOptions): Linter.Config {
+function makeConfig(options: IRuleOptions, language: string): Linter.Config {
   return {
-    files: ['**/*.json'],
+    files: ['**/*.json', '**/*.jsonc', '**/*.json5'],
     plugins: { dialect: dialectPlugin, json: jsonPlugin },
-    language: 'json/json',
+    language,
     rules: { 'dialect/consistent-spelling': ['error', options] }
   };
 }
 
-function lint(code: string, options: IRuleOptions = {}): Linter.LintMessage[] {
-  return linter.verify(code, makeConfig(options), 'file.json');
+function lint(
+  code: string,
+  options: IRuleOptions = {},
+  language: string = 'json/json'
+): Linter.LintMessage[] {
+  return linter.verify(code, makeConfig(options, language), 'file.json');
 }
 
-function fix(code: string, options: IRuleOptions = {}): string {
-  return linter.verifyAndFix(code, makeConfig(options), 'file.json').output;
+function fix(code: string, options: IRuleOptions = {}, language: string = 'json/json'): string {
+  return linter.verifyAndFix(code, makeConfig(options, language), 'file.json').output;
 }
 
 describe('JSON support (@eslint/json)', () => {
@@ -93,5 +98,35 @@ describe('JSON support (@eslint/json)', () => {
 
   it('respects the strings toggle for values', () => {
     expect(lint('{ "k": "the colour" }', { strings: false })).toEqual([]);
+  });
+});
+
+describe('JSON variants (jsonc, json5)', () => {
+  it('checks JSONC keys, values and comments', () => {
+    const code: string = '{\n  // a colour comment\n  "colourKey": "the colour"\n}';
+    const messages: Linter.LintMessage[] = lint(code, {}, 'json/jsonc');
+
+    // The comment, the key and the string value are all flagged. Only the comment and value are
+    // auto-fixed; the key is report-only (like an identifier), so it is left unchanged.
+    expect(messages).toHaveLength(3);
+    expect(fix(code, {}, 'json/jsonc')).toBe('{\n  // a color comment\n  "colourKey": "the color"\n}');
+  });
+
+  it('auto-fixes British spellings inside block comments', () => {
+    expect(fix('{ /* a flavour note */ "k": "v" }', {}, 'json/jsonc')).toBe(
+      '{ /* a flavor note */ "k": "v" }'
+    );
+  });
+
+  it('leaves JSONC comments alone when the comments toggle is off', () => {
+    expect(lint('{\n  // colour\n  "k": "v"\n}', { comments: false }, 'json/jsonc')).toEqual([]);
+  });
+
+  it('checks JSON5, including unquoted keys and single-quoted values', () => {
+    const code: string = "{ colourKey: 'the colour' }";
+    const messages: Linter.LintMessage[] = lint(code, {}, 'json/json5');
+
+    expect(messages).toHaveLength(2);
+    expect(fix(code, {}, 'json/json5')).toBe("{ colourKey: 'the color' }");
   });
 });

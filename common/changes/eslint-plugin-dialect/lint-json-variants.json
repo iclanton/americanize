@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "eslint-plugin-dialect",
+      "comment": "Support the JSONC and JSON5 languages from `@eslint/json`, including JSON5 unquoted keys and `//` / `/* */` comments (checked under the `comments` toggle). Fixes a crash when the rule ran under a JSON5 `language` (a JSON5 `Identifier` key collided with the JavaScript `Identifier` visitor).",
+      "type": "minor"
+    }
+  ],
+  "packageName": "eslint-plugin-dialect",
+  "email": "iclanton@users.noreply.github.com"
+}

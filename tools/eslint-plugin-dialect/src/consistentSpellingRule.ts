@@ -8,13 +8,13 @@ import type { MarkdownRuleVisitor } from '@eslint/markdown';
 import { findNonPreferredSpellings } from '@americanize/british-american-spellings';
 import type { SpellingDialect } from '@americanize/british-american-spellings';
 
-// Minimal structural shape shared by the string-bearing Momoa nodes the JSON adapter reads (a
-// `String` key or value). The richer node typing comes from `JSONRuleVisitor` below; this just
-// lets one small helper accept either without importing Momoa's node types directly.
-interface IJsonNode {
-  readonly type?: string;
-  readonly range?: readonly [number, number];
-}
+// Momoa node shapes, derived from the visitor `@eslint/json` publishes rather than hand-rolled.
+// The `Document` handler receives the document node, whose `tokens` are how JSONC/JSON5 comments
+// are reached. Object keys and values (the `Member` handler's arguments) are a different shape,
+// so `JsonCheckableNode` - what the string/identifier scan accepts - is derived from `Member`.
+type JsonDocumentNode = Parameters<Required<JSONRuleVisitor>['Document']>[0];
+type JsonMemberNode = Parameters<Required<JSONRuleVisitor>['Member']>[0];
+type JsonCheckableNode = JsonMemberNode['name'] | JsonMemberNode['value'];
 
 /** Options accepted by the `consistent-spelling` rule. */
 export interface IConsistentSpellingOptions {
@@ -239,12 +239,13 @@ export const consistentSpellingRule: Rule.RuleModule = {
     }
 
     // `@eslint/json` (Momoa) support. When a JSON `language` is active, ESLint dispatches these
-    // node types instead of the ESTree ones above (the two sets never collide, so a single rule
-    // can serve both). Object keys map to the `identifiers` toggle and are report-only, since a
-    // key rename is a data-contract change; string values map to the `strings` toggle and are
-    // auto-fixable, exactly like their JavaScript counterparts.
-    function scanJsonString(node: IJsonNode | undefined, mode: 'fix' | 'report'): void {
-      if (node?.type === 'String' && node.range !== undefined) {
+    // node types instead of the ESTree ones above. Object keys map to the `identifiers` toggle
+    // and are report-only, since a key rename is a data-contract change; string values map to
+    // the `strings` toggle and are auto-fixable, exactly like their JavaScript counterparts. A
+    // JSON5 unquoted key is an `Identifier` node (which also collides with the ESTree
+    // `Identifier` visitor above - that one bails out when it sees a node with no ESTree parent).
+    function scanJsonNode(node: JsonCheckableNode | undefined, mode: 'fix' | 'report'): void {
+      if ((node?.type === 'String' || node?.type === 'Identifier') && node.range !== undefined) {
         reportSpan(node.range[0], node.range[1], mode);
       }
     }
@@ -257,18 +258,33 @@ export const consistentSpellingRule: Rule.RuleModule = {
       jsonListener.Member = (node): void => {
         const { name, value } = node;
         if (identifiers) {
-          scanJsonString(name, 'report');
+          scanJsonNode(name, 'report');
         }
 
         if (strings) {
-          scanJsonString(value, 'fix');
+          scanJsonNode(value, 'fix');
         }
       };
     }
 
     if (strings) {
       jsonListener.Element = (node): void => {
-        scanJsonString(node.value, 'fix');
+        scanJsonNode(node.value, 'fix');
+      };
+    }
+
+    // JSONC/JSON5 comments are not traversable AST nodes and `@eslint/json` exposes no
+    // `getAllComments()`, but they appear as `LineComment`/`BlockComment` entries in the token
+    // stream. Scan them once at the document root, under the `comments` toggle (auto-fixable,
+    // like a JavaScript comment). Plain JSON has no comment tokens, so this is a no-op there.
+    if (comments) {
+      jsonListener.Document = (): void => {
+        const { tokens } = sourceCode.ast as unknown as JsonDocumentNode;
+        for (const { type, range } of tokens ?? []) {
+          if ((type === 'LineComment' || type === 'BlockComment') && range !== undefined) {
+            reportSpan(range[0], range[1], 'fix');
+          }
+        }
       };
     }
 
@@ -296,7 +312,14 @@ export const consistentSpellingRule: Rule.RuleModule = {
 // parameter, or a non-computed member we define. Property *reads* and imported names are
 // excluded so the rule never fires on an API it cannot rename.
 function isBindingIdentifier(node: Rule.Node): boolean {
-  const { parent } = node;
+  const parent: Rule.Node | undefined = node.parent as Rule.Node | undefined;
+  if (parent === undefined) {
+    // Reached under a non-ESTree language whose AST also has an `Identifier` node (a JSON5
+    // unquoted key), which carries no ESTree parent. Those keys are handled by the JSON
+    // `Member` visitor instead, so ignore them here.
+    return false;
+  }
+
   const { type } = parent;
 
   // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
