@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "eslint-plugin-dialect",
+      "comment": "Support linting JSON (and RESJSON) when paired with the `@eslint/json` language plugin: string values are checked like string literals (auto-fixed) and object keys like identifiers (report-only), reusing the existing `strings`/`identifiers` options.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "eslint-plugin-dialect",
+  "email": "iclanton@users.noreply.github.com"
+}
