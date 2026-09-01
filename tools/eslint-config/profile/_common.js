@@ -3,6 +3,11 @@ const { commonNamingConventionSelectors } = require('@rushstack/eslint-config/fl
 const rushstackEslintPlugin = require('@rushstack/eslint-plugin');
 const importEslintPlugin = require('eslint-plugin-import');
 const headersEslintPlugin = require('eslint-plugin-headers');
+const cssEslintPlugin = require('@eslint/css');
+const yamlEslintParser = require('yaml-eslint-parser');
+const htmlEslintPlugin = require('@html-eslint/eslint-plugin');
+const markdownEslintPlugin = require('@eslint/markdown');
+const jsonEslintPlugin = require('@eslint/json');
 
 const nodeImportResolverPath = require.resolve('eslint-import-resolver-node');
 
@@ -191,6 +196,45 @@ module.exports = {
           }
         ]
       }
+    },
+    {
+      files: ['**/*.json', '**/*.resjson'],
+      // Skip machine-owned or schema-fixed files whose keys you cannot rename.
+      ignores: ['**/package.json', '**/tsconfig*.json'],
+      language: 'json/json',
+      plugins: { json: jsonEslintPlugin, dialect: dialectEslintPlugin },
+      rules: { 'dialect/consistent-spelling': 'warn' }
+    },
+    {
+      files: ['**/*.md'],
+      language: 'markdown/gfm',
+      plugins: { markdown: markdownEslintPlugin, dialect: dialectEslintPlugin },
+      rules: { 'dialect/consistent-spelling': 'warn' }
+    },
+    {
+      files: ['**/*.html'],
+      language: 'html/html',
+      plugins: { html: htmlEslintPlugin, dialect: dialectEslintPlugin },
+      rules: { 'dialect/consistent-spelling': 'warn' }
+    },
+    {
+      files: ['**/*.css'],
+      language: 'css/css',
+      plugins: { css: cssEslintPlugin, dialect: dialectEslintPlugin },
+      rules: { 'dialect/consistent-spelling': 'warn' }
+    },
+    {
+      files: ['**/*.scss'],
+      language: 'css/css',
+      languageOptions: { tolerant: true },
+      plugins: { css: cssEslintPlugin, dialect: dialectEslintPlugin },
+      rules: { 'dialect/consistent-spelling': 'warn' }
+    },
+    {
+      files: ['**/*.yaml', '**/*.yml'],
+      languageOptions: { parser: yamlEslintParser },
+      plugins: { dialect: dialectEslintPlugin },
+      rules: { 'dialect/consistent-spelling': 'warn' }
     },
     {
       files: [
