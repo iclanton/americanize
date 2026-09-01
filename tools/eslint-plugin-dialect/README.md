@@ -127,6 +127,31 @@ Prose is treated as documentation text, mapped onto the **`comments`** toggle, a
 
 To *also* lint the code inside fenced ` ```js ` blocks with the JavaScript rules, add `@eslint/markdown`'s processor separately - that is orthogonal to the prose check above.
 
+## Linting HTML
+
+The rule checks HTML when paired with the [`@html-eslint/eslint-plugin`](https://www.npmjs.com/package/@html-eslint/eslint-plugin) language plugin (install it alongside this one):
+
+```js
+const dialect = require('eslint-plugin-dialect');
+const html = require('@html-eslint/eslint-plugin');
+
+module.exports = [
+  {
+    files: ['**/*.html'],
+    language: 'html/html',
+    plugins: { html, dialect },
+    rules: { 'dialect/consistent-spelling': 'warn' }
+  }
+];
+```
+
+What is checked, and how it maps onto the toggles:
+
+- **Element text** and **`<!-- -->` comment** bodies are prose - the **`comments`** toggle - and are **auto-fixed**.
+- The values of a few **prose attributes** (`alt`, `title`, `placeholder`, `aria-label`, `aria-description`, `aria-placeholder`, `aria-roledescription`, `aria-valuetext`) map to **`strings`** and are auto-fixed.
+
+Tag names, attribute keys, `class`/`id`/`data-*` values and URL attributes (`src`, `href`) are structural, not prose, so they are never touched. (`@html-eslint` does not publish its AST node types, so this adapter uses small local types rather than the plugin's own - unlike the JSON and Markdown adapters.)
+
 ## The rule name
 
 The rule is `dialect/consistent-spelling`, not `american-spelling`, because it enforces *either* dialect. `dialect: 'american'` is just the default.

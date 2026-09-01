@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "eslint-plugin-dialect",
+      "comment": "Support linting HTML when paired with the `@html-eslint/eslint-plugin` language plugin: element text and `<!-- -->` comment bodies are checked like comments, and the values of prose attributes (`alt`, `title`, `placeholder`, `aria-*`) like strings. Tag names, URLs and `class`/`id`/`data-*` values are left alone.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "eslint-plugin-dialect",
+  "email": "iclanton@users.noreply.github.com"
+}

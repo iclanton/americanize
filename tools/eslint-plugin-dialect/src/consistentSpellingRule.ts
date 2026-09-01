@@ -16,6 +16,32 @@ type JsonDocumentNode = Parameters<Required<JSONRuleVisitor>['Document']>[0];
 type JsonMemberNode = Parameters<Required<JSONRuleVisitor>['Member']>[0];
 type JsonCheckableNode = JsonMemberNode['name'] | JsonMemberNode['value'];
 
+// Minimal structural shapes of the `@html-eslint` (html/html) nodes the rule reads. Unlike
+// `@eslint/json` and `@eslint/markdown`, `@html-eslint` does not export its AST node types from
+// its package entry, so they are declared locally. Only user-facing text is checked: element
+// `Text`, the body of `<!-- -->` comments (`CommentContent`) and a few prose attribute values.
+interface IHtmlValueNode {
+  readonly range?: readonly [number, number];
+}
+
+interface IHtmlAttribute {
+  readonly key?: { readonly value?: string };
+  readonly value?: IHtmlValueNode;
+}
+
+// HTML attribute names whose values are human-readable prose. Everything else (URLs in `src`/
+// `href`, `class`/`id` tokens, data-* payloads, ...) is deliberately left unchecked.
+const HTML_PROSE_ATTRIBUTES: ReadonlySet<string> = new Set<string>([
+  'alt',
+  'title',
+  'placeholder',
+  'aria-label',
+  'aria-description',
+  'aria-placeholder',
+  'aria-roledescription',
+  'aria-valuetext'
+]);
+
 /** Options accepted by the `consistent-spelling` rule. */
 export interface IConsistentSpellingOptions {
   /** Which English to enforce: `'american'` (default) or `'british'`. */
@@ -300,6 +326,42 @@ export const consistentSpellingRule: Rule.RuleModule = {
         const end: number | undefined = node.position?.end.offset;
         if (start !== undefined && end !== undefined) {
           reportSpan(start, end, 'fix');
+        }
+      };
+    }
+
+    // `@html-eslint` (html/html) support. Element text and `<!-- -->` comment bodies are prose
+    // (the `comments` toggle); the values of a few prose attributes map to `strings`. Tags,
+    // URLs and class/id attributes are left alone. (The HTML root is also named `Program`, but
+    // the ESTree `Program` handler above is a harmless no-op here - HTML exposes no ESLint-style
+    // comments, so its `getAllComments()` is empty.)
+    interface IHtmlListener {
+      Text?: (node: IHtmlValueNode) => void;
+      CommentContent?: (node: IHtmlValueNode) => void;
+      Attribute?: (node: IHtmlAttribute) => void;
+    }
+    const htmlListener: IHtmlListener = listener as unknown as IHtmlListener;
+
+    function scanHtmlNode(node: IHtmlValueNode | undefined, mode: 'fix' | 'report'): void {
+      if (node?.range !== undefined) {
+        reportSpan(node.range[0], node.range[1], mode);
+      }
+    }
+
+    if (comments) {
+      htmlListener.Text = (node): void => {
+        scanHtmlNode(node, 'fix');
+      };
+      htmlListener.CommentContent = (node): void => {
+        scanHtmlNode(node, 'fix');
+      };
+    }
+
+    if (strings) {
+      htmlListener.Attribute = (node): void => {
+        const name: string | undefined = node.key?.value?.toLowerCase();
+        if (name !== undefined && HTML_PROSE_ATTRIBUTES.has(name)) {
+          scanHtmlNode(node.value, 'fix');
         }
       };
     }
