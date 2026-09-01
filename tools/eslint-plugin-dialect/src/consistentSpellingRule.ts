@@ -4,6 +4,7 @@ import type { Rule } from 'eslint';
 import type { Identifier, Position, PrivateIdentifier, TemplateElement } from 'estree';
 import type { JSONRuleVisitor } from '@eslint/json';
 import type { MarkdownRuleVisitor } from '@eslint/markdown';
+import type { Attribute, AttributeValue, CommentContent, Text } from '@html-eslint/types';
 
 import { findNonPreferredSpellings } from '@americanize/british-american-spellings';
 import type { SpellingDialect } from '@americanize/british-american-spellings';
@@ -16,21 +17,13 @@ type JsonDocumentNode = Parameters<Required<JSONRuleVisitor>['Document']>[0];
 type JsonMemberNode = Parameters<Required<JSONRuleVisitor>['Member']>[0];
 type JsonCheckableNode = JsonMemberNode['name'] | JsonMemberNode['value'];
 
-// Minimal structural shapes of the `@html-eslint` (html/html) nodes the rule reads. Unlike
-// `@eslint/json` and `@eslint/markdown`, `@html-eslint` does not export its AST node types from
-// its package entry, so they are declared locally. Only user-facing text is checked: element
-// `Text`, the body of `<!-- -->` comments (`CommentContent`) and a few prose attribute values.
-interface IHtmlValueNode {
-  readonly range?: readonly [number, number];
-}
+// `@html-eslint` (html/html) node types come from `@html-eslint/types`; only the visitor shape
+// (`IHtmlListener` below) is hand-rolled, since the plugin does not publish one. Only
+// user-facing text is checked: element `Text`, the body of `<!-- -->` comments
+// (`CommentContent`) and a curated set of attribute values.
+type HtmlValueNode = Text | CommentContent | AttributeValue;
 
-interface IHtmlAttribute {
-  readonly key?: { readonly value?: string };
-  readonly value?: IHtmlValueNode;
-}
-
-// HTML attribute names whose values are human-readable prose. Everything else (URLs in `src`/
-// `href`, `class`/`id` tokens, data-* payloads, ...) is deliberately left unchecked.
+// HTML attribute names whose values are human-readable prose (auto-fixed, like a string).
 const HTML_PROSE_ATTRIBUTES: ReadonlySet<string> = new Set<string>([
   'alt',
   'title',
@@ -40,6 +33,26 @@ const HTML_PROSE_ATTRIBUTES: ReadonlySet<string> = new Set<string>([
   'aria-placeholder',
   'aria-roledescription',
   'aria-valuetext'
+]);
+
+// HTML attribute names whose values are author-chosen identifiers or references to them (a CSS
+// class, an element id, a form-control name, ...). These are checked but *reported only* - never
+// auto-fixed - because renaming one would break the stylesheet, script or anchor that refers to
+// it, exactly like a JavaScript identifier. Everything else (URLs, `data-*`, `type`, ...) is
+// left alone entirely.
+const HTML_IDENTIFIER_ATTRIBUTES: ReadonlySet<string> = new Set<string>([
+  'class',
+  'id',
+  'name',
+  'for',
+  'form',
+  'list',
+  'headers',
+  'aria-labelledby',
+  'aria-describedby',
+  'aria-controls',
+  'aria-owns',
+  'aria-activedescendant'
 ]);
 
 /** Options accepted by the `consistent-spelling` rule. */
@@ -331,18 +344,19 @@ export const consistentSpellingRule: Rule.RuleModule = {
     }
 
     // `@html-eslint` (html/html) support. Element text and `<!-- -->` comment bodies are prose
-    // (the `comments` toggle); the values of a few prose attributes map to `strings`. Tags,
-    // URLs and class/id attributes are left alone. (The HTML root is also named `Program`, but
-    // the ESTree `Program` handler above is a harmless no-op here - HTML exposes no ESLint-style
-    // comments, so its `getAllComments()` is empty.)
+    // (the `comments` toggle); prose attribute values map to `strings` (auto-fixed) and
+    // identifier attributes (class, id, ...) to `identifiers` (report-only). Tags, URLs and
+    // other attributes are left alone. (The HTML root is also named `Program`, but the ESTree
+    // `Program` handler above is a harmless no-op here - HTML exposes no ESLint-style comments,
+    // so its `getAllComments()` is empty.)
     interface IHtmlListener {
-      Text?: (node: IHtmlValueNode) => void;
-      CommentContent?: (node: IHtmlValueNode) => void;
-      Attribute?: (node: IHtmlAttribute) => void;
+      Text?: (node: Text) => void;
+      CommentContent?: (node: CommentContent) => void;
+      Attribute?: (node: Attribute) => void;
     }
     const htmlListener: IHtmlListener = listener as unknown as IHtmlListener;
 
-    function scanHtmlNode(node: IHtmlValueNode | undefined, mode: 'fix' | 'report'): void {
+    function scanHtmlNode(node: HtmlValueNode | undefined, mode: 'fix' | 'report'): void {
       if (node?.range !== undefined) {
         reportSpan(node.range[0], node.range[1], mode);
       }
@@ -357,11 +371,13 @@ export const consistentSpellingRule: Rule.RuleModule = {
       };
     }
 
-    if (strings) {
+    if (identifiers || strings) {
       htmlListener.Attribute = (node): void => {
-        const name: string | undefined = node.key?.value?.toLowerCase();
-        if (name !== undefined && HTML_PROSE_ATTRIBUTES.has(name)) {
+        const name: string | undefined = node.key.value.toLowerCase();
+        if (strings && HTML_PROSE_ATTRIBUTES.has(name)) {
           scanHtmlNode(node.value, 'fix');
+        } else if (identifiers && HTML_IDENTIFIER_ATTRIBUTES.has(name)) {
+          scanHtmlNode(node.value, 'report');
         }
       };
     }

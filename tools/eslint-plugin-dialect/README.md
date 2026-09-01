@@ -149,8 +149,9 @@ What is checked, and how it maps onto the toggles:
 
 - **Element text** and **`<!-- -->` comment** bodies are prose - the **`comments`** toggle - and are **auto-fixed**.
 - The values of a few **prose attributes** (`alt`, `title`, `placeholder`, `aria-label`, `aria-description`, `aria-placeholder`, `aria-roledescription`, `aria-valuetext`) map to **`strings`** and are auto-fixed.
+- The values of **identifier attributes** (`class`, `id`, `name`, `for`, `form`, `list`, `headers`, and the id-reference `aria-*` attributes) map to **`identifiers`** and are **reported only** - never auto-fixed - since a class or id is referenced from stylesheets, scripts and anchors. So a class named `lightColour` is flagged, but you rename it yourself.
 
-Tag names, attribute keys, `class`/`id`/`data-*` values and URL attributes (`src`, `href`) are structural, not prose, so they are never touched. (`@html-eslint` does not publish its AST node types, so this adapter uses small local types rather than the plugin's own - unlike the JSON and Markdown adapters.)
+Tag names, attribute keys, `data-*` values and URL attributes (`src`, `href`) are structural, not prose, so they are never touched. (The HTML node types come from `@html-eslint/types`; only the visitor shape is declared locally, since `@html-eslint` does not publish one - unlike the JSON and Markdown adapters, which use the plugins' own visitor types.)
 
 ## The rule name
 

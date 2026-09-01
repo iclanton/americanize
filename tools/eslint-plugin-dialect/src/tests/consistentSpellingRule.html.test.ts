@@ -30,6 +30,7 @@ interface IRuleOptions {
   readonly dialect?: 'american' | 'british';
   readonly comments?: boolean;
   readonly strings?: boolean;
+  readonly identifiers?: boolean;
 }
 
 function makeConfig(options: IRuleOptions): Linter.Config {
@@ -64,13 +65,29 @@ describe('HTML support (@html-eslint)', () => {
 
   it('auto-fixes prose attribute values but not URLs, ids or classes', () => {
     const code: string = '<img alt="a colour" title="the flavour" src="colour.png" class="colour-x">';
-    // Only alt and title are prose; src and class are left alone.
+    // alt and title are prose (fixed); src is a URL (ignored); class is an identifier (flagged
+    // below, but never auto-fixed - so unchanged here).
     expect(fix(code)).toBe('<img alt="a color" title="the flavor" src="colour.png" class="colour-x">');
   });
 
-  it('does not touch script/style contents or tag names', () => {
-    // Tag names and attribute keys are structural, never prose.
-    expect(lint('<colour-picker data-colour="x"></colour-picker>')).toEqual([]);
+  it('flags identifier attributes (class, id, ...) but never rewrites them', () => {
+    // A CSS class name like `lightColour` is referenced from stylesheets/scripts, so it is
+    // report-only, like a JavaScript identifier.
+    const code: string = '<div class="lightColour" id="darkId" for="theColour"></div>';
+    const messages: Linter.LintMessage[] = lint(code);
+
+    // `lightColour` -> colour and `theColour` -> colour are flagged; `darkId` has no British word.
+    expect(messages).toHaveLength(2);
+    expect(fix(code)).toBe(code);
+  });
+
+  it('respects the identifiers toggle for identifier attributes', () => {
+    expect(lint('<div class="lightColour"></div>', { identifiers: false })).toEqual([]);
+  });
+
+  it('does not touch URLs, data-* attributes or tag names', () => {
+    // Tag names, URL attributes and data-* payloads are structural, never prose.
+    expect(lint('<a href="colour.html" data-colour="x">ok</a>')).toEqual([]);
   });
 
   it('enforces British when the dialect option is set', () => {
@@ -81,7 +98,7 @@ describe('HTML support (@html-eslint)', () => {
     expect(lint('<p>colour</p><!-- colour -->', { comments: false })).toEqual([]);
   });
 
-  it('respects the strings toggle for attribute values', () => {
+  it('respects the strings toggle for prose attribute values', () => {
     expect(lint('<img alt="colour">', { strings: false })).toEqual([]);
   });
 });
