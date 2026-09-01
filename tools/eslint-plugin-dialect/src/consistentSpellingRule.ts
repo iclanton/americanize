@@ -8,13 +8,13 @@ import type { MarkdownRuleVisitor } from '@eslint/markdown';
 import { findNonPreferredSpellings } from '@americanize/british-american-spellings';
 import type { SpellingDialect } from '@americanize/british-american-spellings';
 
-// Minimal structural shape shared by the string-bearing Momoa nodes the JSON adapter reads (a
-// `String` key or value). The richer node typing comes from `JSONRuleVisitor` below; this just
-// lets one small helper accept either without importing Momoa's node types directly.
-interface IJsonNode {
-  readonly type?: string;
-  readonly range?: readonly [number, number];
-}
+// Momoa node shapes, derived from the visitor `@eslint/json` publishes rather than hand-rolled.
+// The `Document` handler receives the document node, whose `tokens` are how JSONC/JSON5 comments
+// are reached. Object keys and values (the `Member` handler's arguments) are a different shape,
+// so `JsonCheckableNode` - what the string/identifier scan accepts - is derived from `Member`.
+type JsonDocumentNode = Parameters<Required<JSONRuleVisitor>['Document']>[0];
+type JsonMemberNode = Parameters<Required<JSONRuleVisitor>['Member']>[0];
+type JsonCheckableNode = JsonMemberNode['name'] | JsonMemberNode['value'];
 
 /** Options accepted by the `consistent-spelling` rule. */
 export interface IConsistentSpellingOptions {
@@ -244,7 +244,7 @@ export const consistentSpellingRule: Rule.RuleModule = {
     // the `strings` toggle and are auto-fixable, exactly like their JavaScript counterparts. A
     // JSON5 unquoted key is an `Identifier` node (which also collides with the ESTree
     // `Identifier` visitor above - that one bails out when it sees a node with no ESTree parent).
-    function scanJsonNode(node: IJsonNode | undefined, mode: 'fix' | 'report'): void {
+    function scanJsonNode(node: JsonCheckableNode | undefined, mode: 'fix' | 'report'): void {
       if ((node?.type === 'String' || node?.type === 'Identifier') && node.range !== undefined) {
         reportSpan(node.range[0], node.range[1], mode);
       }
@@ -279,12 +279,10 @@ export const consistentSpellingRule: Rule.RuleModule = {
     // like a JavaScript comment). Plain JSON has no comment tokens, so this is a no-op there.
     if (comments) {
       jsonListener.Document = (): void => {
-        const { tokens } = sourceCode.ast as unknown as {
-          tokens?: ReadonlyArray<{ type: string; range: readonly [number, number] }>;
-        };
-        for (const token of tokens ?? []) {
-          if (token.type === 'LineComment' || token.type === 'BlockComment') {
-            reportSpan(token.range[0], token.range[1], 'fix');
+        const { tokens } = sourceCode.ast as unknown as JsonDocumentNode;
+        for (const { type, range } of tokens ?? []) {
+          if ((type === 'LineComment' || type === 'BlockComment') && range !== undefined) {
+            reportSpan(range[0], range[1], 'fix');
           }
         }
       };
