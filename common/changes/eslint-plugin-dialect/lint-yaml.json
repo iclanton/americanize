@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "eslint-plugin-dialect",
+      "comment": "Support linting YAML when paired with the `yaml-eslint-parser` parser (via `languageOptions.parser`): `#` comments and scalar values are checked like comments/strings (auto-fixed), and mapping keys like identifiers (report-only).",
+      "type": "minor"
+    }
+  ],
+  "packageName": "eslint-plugin-dialect",
+  "email": "iclanton@users.noreply.github.com"
+}

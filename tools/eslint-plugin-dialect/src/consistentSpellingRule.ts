@@ -11,6 +11,7 @@ import type {
   CommentContent as HtmlCommentContent,
   Text as HtmlText
 } from '@html-eslint/types';
+import type { AST as YamlAST } from 'yaml-eslint-parser';
 
 import { findNonPreferredSpellings } from '@americanize/british-american-spellings';
 import type { SpellingDialect } from '@americanize/british-american-spellings';
@@ -437,6 +438,47 @@ export const consistentSpellingRule: Rule.RuleModule = {
       };
       cssListener.IdSelector = (node): void => {
         scanCssLoc(node.loc, 'report');
+      };
+    }
+
+    // `yaml-eslint-parser` support. Unlike the others this is a *parser* (configured via
+    // `languageOptions.parser`), so it produces an ESTree-superset AST: the root is a `Program`,
+    // which means YAML `#` comments flow through the ESTree comment handler above for free. Here
+    // we add the YAML-specific nodes: a mapping key is an identifier (report-only, since config
+    // keys are referenced elsewhere) and mapping/sequence scalar values are strings (auto-fixed).
+    interface IYamlListener {
+      YAMLPair?: (node: YamlAST.YAMLPair) => void;
+      YAMLSequence?: (node: YamlAST.YAMLSequence) => void;
+    }
+    const yamlListener: IYamlListener = listener as IYamlListener;
+
+    function scanYamlScalar(
+      node: YamlAST.YAMLContent | YamlAST.YAMLWithMeta | null,
+      mode: 'fix' | 'report'
+    ): void {
+      if (node?.type === 'YAMLScalar') {
+        const [start, end] = node.range;
+        reportSpan(start, end, mode);
+      }
+    }
+
+    if (identifiers || strings) {
+      yamlListener.YAMLPair = (node): void => {
+        if (identifiers) {
+          scanYamlScalar(node.key, 'report');
+        }
+
+        if (strings) {
+          scanYamlScalar(node.value, 'fix');
+        }
+      };
+    }
+
+    if (strings) {
+      yamlListener.YAMLSequence = (node): void => {
+        for (const entry of node.entries) {
+          scanYamlScalar(entry, 'fix');
+        }
       };
     }
 
