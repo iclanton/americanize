@@ -21,13 +21,24 @@ interface IJsonNodeHost {
   readonly value?: IJsonNode;
 }
 
+// Minimal structural shape of the `@eslint/markdown` (mdast) node the rule reacts to. When a
+// consumer configures a Markdown `language`, prose lives in `text` leaf nodes; those are the
+// only nodes visited, so code spans, fenced code blocks and link URLs (none of which are `text`
+// children) are left alone. mdast carries source offsets on `position` rather than `range`.
+interface IMarkdownText {
+  readonly position?: {
+    readonly start?: { readonly offset?: number };
+    readonly end?: { readonly offset?: number };
+  };
+}
+
 /** Options accepted by the `consistent-spelling` rule. */
 export interface IConsistentSpellingOptions {
   /** Which English to enforce: `'american'` (default) or `'british'`. */
   readonly dialect: SpellingDialect;
   /** Check identifiers (variable, function, class and member names; JSON object keys). Defaults to `true`. */
   readonly identifiers: boolean;
-  /** Check `//` and block comments. Defaults to `true`. */
+  /** Check `//` and block comments (Markdown prose). Defaults to `true`. */
   readonly comments: boolean;
   /** Check string literals and template strings (JSON string values). Defaults to `true`. */
   readonly strings: boolean;
@@ -278,6 +289,25 @@ export const consistentSpellingRule: Rule.RuleModule = {
     if (strings) {
       jsonListener.Element = (host: IJsonNodeHost): void => {
         scanJsonString(host.value, 'fix');
+      };
+    }
+
+    // `@eslint/markdown` (mdast) support. Under a Markdown `language`, ESLint dispatches these
+    // node types instead. Prose is documentation-style text, so it maps to the `comments`
+    // toggle and is auto-fixable; visiting only `text` leaves skips code spans, fenced code
+    // blocks and link URLs.
+    interface IMarkdownListener {
+      text?: (node: IMarkdownText) => void;
+    }
+    const markdownListener: IMarkdownListener = listener as IMarkdownListener;
+
+    if (comments) {
+      markdownListener.text = (node: IMarkdownText): void => {
+        const start: number | undefined = node.position?.start?.offset;
+        const end: number | undefined = node.position?.end?.offset;
+        if (start !== undefined && end !== undefined) {
+          reportSpan(start, end, 'fix');
+        }
       };
     }
 

@@ -105,6 +105,28 @@ In JSON, the rule maps onto the same `identifiers` / `strings` toggles as in Jav
 
 RESJSON is just JSON, so the same block covers it - point `files` at `**/*.resjson`. For JSON with comments or trailing commas, use `language: 'json/jsonc'` (or `'json/json5'`); see the `@eslint/json` docs. Because the JSON handling keys off the language, one config block can enforce a dialect across `.json`, `.jsonc` and `.resjson` without any change to the rule.
 
+## Linting Markdown
+
+The rule also checks Markdown prose when paired with ESLint's official [`@eslint/markdown`](https://www.npmjs.com/package/@eslint/markdown) language plugin (install it alongside this one):
+
+```js
+const dialect = require('eslint-plugin-dialect');
+const markdown = require('@eslint/markdown');
+
+module.exports = [
+  {
+    files: ['**/*.md'],
+    language: 'markdown/gfm',
+    plugins: { markdown, dialect },
+    rules: { 'dialect/consistent-spelling': 'warn' }
+  }
+];
+```
+
+Prose is treated as documentation text, mapped onto the **`comments`** toggle, and is **auto-fixed**. Only prose is checked: paragraphs, headings, list items, emphasis and link **text**. Inline code (`` `likeThis` ``), fenced code blocks and link **URLs** are left alone, because they are not prose nodes. Use `language: 'markdown/commonmark'` for strict CommonMark instead of GitHub-flavoured Markdown. (Note: auto-fixing a heading changes its generated anchor, so an in-page link to that heading may need updating.)
+
+To *also* lint the code inside fenced ` ```js ` blocks with the JavaScript rules, add `@eslint/markdown`'s processor separately - that is orthogonal to the prose check above.
+
 ## The rule name
 
 The rule is `dialect/consistent-spelling`, not `american-spelling`, because it enforces *either* dialect. `dialect: 'american'` is just the default.
