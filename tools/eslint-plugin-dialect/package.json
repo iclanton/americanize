@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-dialect",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "An ESLint rule that enforces a single English dialect (American or British) in identifiers, comments and strings.",
   "keywords": [
     "eslint",

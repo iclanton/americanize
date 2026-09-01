@@ -2,6 +2,33 @@
   "name": "eslint-plugin-dialect",
   "entries": [
     {
+      "version": "0.4.0",
+      "tag": "eslint-plugin-dialect_v0.4.0",
+      "date": "Tue, 01 Sep 2026 06:58:12 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Support linting CSS when paired with the `@eslint/css` language plugin: `/* */` comments and string values are checked like comments/strings (auto-fixed), and class/id selector names like identifiers (report-only). SCSS is supported best-effort in the parser's `tolerant` mode."
+          },
+          {
+            "comment": "Support linting HTML when paired with the `@html-eslint/eslint-plugin` language plugin. Element text and `<!-- -->` comment bodies are checked like comments; prose attribute values (`alt`, `title`, `aria-*`) like strings (auto-fixed); and identifier attributes (`class`, `id`, `name`, `for`, ...) like identifiers (report-only). Tag names, URLs and `data-*` values are left alone."
+          },
+          {
+            "comment": "Support the JSONC and JSON5 languages from `@eslint/json`, including JSON5 unquoted keys and `//` / `/* */` comments (checked under the `comments` toggle). Fixes a crash when the rule ran under a JSON5 `language` (a JSON5 `Identifier` key collided with the JavaScript `Identifier` visitor)."
+          },
+          {
+            "comment": "Support linting JSON (and RESJSON) when paired with the `@eslint/json` language plugin: string values are checked like string literals (auto-fixed) and object keys like identifiers (report-only), reusing the existing `strings`/`identifiers` options."
+          },
+          {
+            "comment": "Support linting Markdown prose when paired with the `@eslint/markdown` language plugin: prose text (paragraphs, headings, list items, link text) is checked like a comment and auto-fixed, while inline code, fenced code blocks and link URLs are left alone."
+          },
+          {
+            "comment": "Support linting YAML when paired with the `yaml-eslint-parser` parser (via `languageOptions.parser`): `#` comments and scalar values are checked like comments/strings (auto-fixed), and mapping keys like identifiers (report-only)."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.3.0",
       "tag": "eslint-plugin-dialect_v0.3.0",
       "date": "Sun, 30 Aug 2026 06:53:20 GMT",
