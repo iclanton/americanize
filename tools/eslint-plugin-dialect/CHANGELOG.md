@@ -1,6 +1,13 @@
 # Change Log - eslint-plugin-dialect
 
-This log was last generated on Tue, 01 Sep 2026 06:58:12 GMT and should not be manually modified.
+This log was last generated on Tue, 27 Oct 2026 21:24:41 GMT and should not be manually modified.
+
+## 0.4.1
+Tue, 27 Oct 2026 21:24:41 GMT
+
+### Patches
+
+- Skip SVG metadata text to prevent false positives and unsafe autofixes of encoded editor payloads.
 
 ## 0.4.0
 Tue, 01 Sep 2026 06:58:12 GMT
