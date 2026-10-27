@@ -90,6 +90,42 @@ describe('HTML support (@html-eslint)', () => {
     expect(lint('<a href="colour.html" data-colour="x">ok</a>')).toEqual([]);
   });
 
+  it.each(['american', 'british'] as const)('preserves encoded SVG metadata in %s mode', (dialect) => {
+    const code: string = [
+      '<svg xmlns="http://www.w3.org/2000/svg" xmlns:i="http://ns.adobe.com/AdobeIllustrator/10.0/">',
+      '<metadata><i:aipgf i:pgfEncoding="zstd/base64"><![CDATA[',
+      'SMumJj01k3kw',
+      '2greWEwj3Mmb',
+      'SMomJj01k3kw',
+      ']]></i:aipgf></metadata>',
+      '</svg>'
+    ].join('\n');
+
+    expect(lint(code, { dialect })).toEqual([]);
+    expect(fix(code, { dialect })).toBe(code);
+  });
+
+  it('still checks SVG prose, including CDATA, alongside metadata', () => {
+    const code: string =
+      '<svg><metadata><nested>colour</nested></metadata>' +
+      '<title>colour</title><desc>neighbour</desc><text>flavour</text>' +
+      '<text><![CDATA[colour]]></text><text aria-label="colour">ok</text><!-- colour --></svg>';
+
+    expect(lint(code)).toHaveLength(6);
+    expect(fix(code)).toBe(
+      '<svg><metadata><nested>colour</nested></metadata>' +
+        '<title>color</title><desc>neighbor</desc><text>flavor</text>' +
+        '<text><![CDATA[color]]></text><text aria-label="color">ok</text><!-- color --></svg>'
+    );
+  });
+
+  it('does not exclude metadata text outside SVG', () => {
+    const code: string = '<metadata><span>colour</span></metadata>';
+
+    expect(lint(code)).toHaveLength(1);
+    expect(fix(code)).toBe('<metadata><span>color</span></metadata>');
+  });
+
   it('enforces British when the dialect option is set', () => {
     expect(fix('<p>The color</p>', { dialect: 'british' })).toBe('<p>The colour</p>');
   });

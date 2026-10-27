@@ -377,6 +377,17 @@ export const consistentSpellingRule: Rule.RuleModule = {
 
     if (comments) {
       htmlListener.Text = (node): void => {
+        let insideMetadata: boolean = false;
+        for (let ancestor: HtmlText['parent'] = node.parent; ancestor; ancestor = ancestor.parent) {
+          if ('name' in ancestor) {
+            if (ancestor.name === 'metadata') {
+              insideMetadata = true;
+            } else if (insideMetadata && ancestor.name === 'svg') {
+              return;
+            }
+          }
+        }
+
         scanHtmlNode(node, 'fix');
       };
       htmlListener.CommentContent = (node): void => {
