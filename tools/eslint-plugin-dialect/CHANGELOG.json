@@ -2,6 +2,18 @@
   "name": "eslint-plugin-dialect",
   "entries": [
     {
+      "version": "0.4.1",
+      "tag": "eslint-plugin-dialect_v0.4.1",
+      "date": "Tue, 27 Oct 2026 21:21:14 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Skip SVG metadata text to prevent false positives and unsafe autofixes of encoded editor payloads."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.4.0",
       "tag": "eslint-plugin-dialect_v0.4.0",
       "date": "Tue, 01 Sep 2026 06:58:12 GMT",
