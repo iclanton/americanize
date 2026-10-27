@@ -155,6 +155,8 @@ What is checked, and how it maps onto the toggles:
 
 Tag names, attribute keys, `data-*` values and URL attributes (`src`, `href`) are structural, not prose, so they are never touched. (The HTML node types come from `@html-eslint/types`; only the visitor shape is declared locally, since `@html-eslint` does not publish one - unlike the JSON and Markdown adapters, which use the plugins' own visitor types.)
 
+The same language configuration can check SVG files by adding `**/*.svg` to `files`. Text inside SVG `<metadata>` is skipped because it can contain encoded editor data, such as Adobe Illustrator's compressed base64 payloads. SVG `<text>`, `<title>` and `<desc>` content outside metadata is still checked, including prose inside CDATA sections.
+
 ## Linting CSS (and SCSS)
 
 The rule checks CSS when paired with ESLint's official [`@eslint/css`](https://www.npmjs.com/package/@eslint/css) language plugin (install it alongside this one):
